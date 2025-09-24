@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安室奈美惠作品牆</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#111;color:#fff;}
+h2{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+h2 button{background:none;border:none;color:#0af;font-size:18px;cursor:pointer;}
+h3{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+h3 button{background:none;border:none;color:#0af;font-size:16px;cursor:pointer;}
+.cards-container{position:relative;display:flex;align-items:center;margin-bottom:30px;}
+.cards-row{display:flex;overflow-x:auto;scroll-behavior:smooth;gap:10px;padding:10px 0;}
+.cards-row::-webkit-scrollbar{display:none;}
+.cards-row{-ms-overflow-style:none;scrollbar-width:none;}
+.card{
+  flex:0 0 auto;
+  width:140px;
+  cursor:pointer;
+  text-align:center;
+  border-radius:8px;
+  background:#222;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.card img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  border: none;       /* 加這行 */
+  display: block;     /* 避免 inline 造成空隙 */
+}
+
+.card-title{padding:5px;font-size:14px;color:#fff;}
+.arrow-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:35px;height:35px;font-size:20px;cursor:pointer;}
+#overview{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#111;padding:20px;box-sizing:border-box;overflow-y:auto;}
+.item{display:flex;align-items:center;margin:8px 0;padding:5px;background:#222;border-radius:6px;cursor:pointer;}
+.item img{width:50px;height:50px;object-fit:cover;border-radius:4px;margin-right:10px;}
+.item span{color:#fff;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+.modal.show{opacity:1;pointer-events:auto;}
+.modal-content{
+  background:white;color:#000;border-radius:12px;padding:20px;width:90%;max-width:500px;display:flex;gap:15px;transform:translateY(20px);transition:transform .3s ease;
+  flex-direction:row; /* 左圖右文字 */
+  align-items:flex-start;
+}
+.modal.show .modal-content{transform:translateY(0);}
+
+.cover{
+  width:120px;       /* 調整寬度 */
+  height:180px;      /* 調整高度，變成高圖 */
+  background:#ccc;
+  border-radius:8px;
+  background-size:cover;
+  background-position:center;
+  flex-shrink:0;
+}
+
+.info{flex:1;margin-top:0;}
+.tag{display:inline-block;background:#eee;padding:4px 8px;border-radius:12px;margin:5px 0;}
+.desc-text{margin-top:10px;color:#333;white-space:pre-line;}
+.close-btn,.watch-btn{margin-top:10px;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;}
+.close-btn{background:#2196f3;color:white;}
+.watch-btn{background:#ff69b4;color:white;float:right;}
+@keyframes slide-in{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.slide-in{animation:slide-in 0.5s forwards;}
+</style>
+</head>
+<body>
+
+<!-- 首頁 -->
+<div id="home">
+  <h2>作品牆</h2>
+
+  <h3>錄音室專輯 <button onclick="showOverview('studio')">›</button></h3>
+  <div class="cards-container">
+    <div class="cards-row" id="studioRow"></div>
+    <button class="arrow-btn" onclick="scrollRow('studioRow')">›</button>
+  </div>
+
+  <h3>精選輯 <button onclick="showOverview('best')">›</button></h3>
+  <div class="cards-container">
+    <div class="cards-row" id="bestRow"></div>
+    <button class="arrow-btn" onclick="scrollRow('bestRow')">›</button>
+  </div>
+
+  <h3>演唱會 / DVD / Blu-ray <button onclick="showOverview('concerts')">›</button></h3>
+  <div class="cards-container">
+    <div class="cards-row" id="concertsRow"></div>
+    <button class="arrow-btn" onclick="scrollRow('concertsRow')">›</button>
+  </div>
+</div>
+
+<!-- 總覽 -->
+<div id="overview">
+  <h2>作品總覽 <button onclick="showHome()">‹</button></h2>
+  <div id="overview-list"></div>
+</div>
+
+<!-- 浮窗 -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="cover" id="modal-cover"></div>
+    <div class="info">
+      <h3 id="title"></h3>
+      <div class="tag" id="tag"></div>
+      <p id="desc"></p>
+      <div class="desc-text" id="extraDesc"></div>
+      <button class="close-btn" onclick="closeModal()">關閉</button>
+      <button class="watch-btn" id="watchBtn" style="display:none;" onclick="watchConcert()">立即收看</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 資料範例
+
+// 12張錄音室專輯
+const studio=[
+  {title:"DANCE TRACKS VOL.1",date:"1995.06.16",desc:"首張錄音室專輯",cover:"https://via.placeholder.com/150/888/fff?text=DANCE", extra:"這張專輯包含她的出道單曲和初期代表曲，是安室音樂生涯的起點。"},
+  {title:"Sweet 19 Blues",date:"1996.07.22",desc:"人氣專輯",cover:"https://via.placeholder.com/150/888/fff?text=S19B", extra:"專輯中收錄了多首熱門單曲，奠定她的超人氣地位。"},
+  {title:"Concentration 20",date:"1997.07.24",desc:"第三張錄音室專輯",cover:"https://via.placeholder.com/150/888/fff?text=C20", extra:"專輯風格多樣，展現了她音樂上的多元嘗試。"},
+  {title:"Genius 2000",date:"2000.01.26",desc:"第4張專輯",cover:"https://via.placeholder.com/150/888/fff?text=G2000", extra:"融合了多種音樂風格，展現了她的音樂才華。"},
+  {title:"Break the Rules",date:"2000.12.20",desc:"第5張專輯",cover:"https://via.placeholder.com/150/888/fff?text=BTR", extra:"專輯風格成熟，展現她的音樂轉變。"},
+  {title:"Style",date:"2003.12.10",desc:"第6張專輯",cover:"https://via.placeholder.com/150/888/fff?text=STYLE", extra:"專輯風格多樣，展現她的音樂多元性。"},
+  {title:"Queen of Hip-Pop",date:"2005.07.13",desc:"第7張專輯",cover:"https://via.placeholder.com/150/888/fff?text=QHP", extra:"專輯風格以嘻哈為主，展現她的音樂實驗。"},
+  {title:"Play",date:"2007.06.27",desc:"第8張專輯",cover:"https://via.placeholder.com/150/888/fff?text=PLAY", extra:"專輯風格以流行為主，展現她的音樂才華。"},
+  {title:"Past < Future",date:"2009.12.16",desc:"第9張專輯",cover:"https://via.placeholder.com/150/888/fff?text=PF", extra:"專輯風格融合了過去與未來的元素。"},
+  {title:"Uncontrolled",date:"2012.06.27",desc:"第10張專輯",cover:"https://via.placeholder.com/150/888/fff?text=UNC", extra:"專輯風格自由多變，展現了她的音樂多樣性。"},
+  {title:"Feel",date:"2013.07.10",desc:"第11張專輯",cover:"https://via.placeholder.com/150/888/fff?text=FEEL", extra:"專輯風格情感豐富，展現了她的音樂深度。"},
+  {title:"Genic",date:"2015.06.10",desc:"第12張專輯",cover:"https://via.placeholder.com/150/888/fff?text=GENIC", extra:"專輯風格以電子流行為主，展現她的音樂實驗。"},
+];
+
+// 精選輯
+const best = [
+  {title:"181920", date:"1998.01.28", desc:"第一張精選輯", cover:"https://upload.wikimedia.org/wikipedia/zh/e/ec/181920.JPG", extra:"精選出她前期最受歡迎的歌曲。"},
+  {title:"BEST FICTION", date:"2008.09.10", desc:"第二張精選輯", cover:"https://via.placeholder.com/150/888/fff?text=BEST+FICTION", extra:"收錄了她的多首熱門歌曲，展現了她的音樂魅力。"},
+  {title:"Ballada", date:"2014.06.04", desc:"抒情精選", cover:"https://via.placeholder.com/150/888/fff?text=BALLADA", extra:"收錄了多首經典情歌，是她的告別精選輯之一。"},
+  {title:"Finally", date:"2017.11.08", desc:"第三張精選輯", cover:"https://via.placeholder.com/150/888/fff?text=Finally", extra:"收錄她的45首經典歌曲，為音樂生涯畫下完美句點。"},
+];
+
+// 演唱會 19 部
+const concerts=[
+  {title:"namie amuro FIRST ANNIVERSARY 1996 LIVE at Marine Stadium", date:"1996.08.21", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE1", extra:"首次大型演唱會，展現初期舞台魅力。", url:""},
+  {title:"namie amuro SUMMER PRESENTS '97 MARINE STADIUM LIVE", date:"1997.08.06", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE2", extra:"大型夏季演唱會，人氣飆升。", url:""},
+  {title:"namie amuro tour 1997 A CONCERT TOUR", date:"1998.03.18", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE3", extra:"首次巡演演唱會，展現舞台實力。", url:""},
+  {title:"genius 2000 tour", date:"2000.12.20", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE4", extra:"Genius 2000專輯巡演，帶來精彩舞台表演。", url:""},
+  {title:"break the rules tour 2001", date:"2001.12.05", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE5", extra:"Break the Rules專輯巡演，演出高能。", url:""},
+  {title:"namie amuro tour 2002 STYLE", date:"2002.12.04", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE6", extra:"STYLE專輯巡演，風格多樣。", url:""},
+  {title:"namie amuro SO CRAZY tour featuring BEST singles 2003-2004", date:"2003.12.10", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE7", extra:"回顧精選單曲巡演，人氣爆棚。", url:""},
+  {title:"namie amuro LIVE STYLE 2005", date:"2005.06.01", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE8", extra:"LIVE STYLE巡演，舞台設計華麗。", url:""},
+  {title:"namie amuro BEST tour “Live Style 2006”", date:"2006.05.17", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE9", extra:"精選巡演，表演精彩紛呈。", url:""},
+  {title:"namie amuro PLAY tour 2007", date:"2007.08.22", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE10", extra:"PLAY專輯巡演，舞台充滿活力。", url:""},
+  {title:"namie amuro BEST FICTION tour 2008-2009", date:"2009.09.09", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE11", extra:"BEST FICTION巡演，經典歌曲集。", url:""},
+  {title:"namie amuro PAST＜FUTURE tour 2010", date:"2011.12.21", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE12", extra:"PAST＜FUTURE巡演，融合舊作與新作。", url:""},
+  {title:"namie amuro LIVE STYLE 2011", date:"2012.08.29", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE13", extra:"LIVE STYLE巡演，舞台設計亮眼。", url:""},
+  {title:"namie amuro 5 Major Domes Tour 2012 〜20th Anniversary Best〜", date:"2013.02.27", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE14", extra:"20周年大型巡演，五大巨蛋盛況。", url:""},
+  {title:"namie amuro FEEL tour 2013", date:"2014.02.26", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE15", extra:"FEEL專輯巡演，情感豐富。", url:""},
+  {title:"namie amuro LIVE STYLE 2014", date:"2015.02.11", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE16", extra:"LIVE STYLE巡演，舞台表演出色。", url:""},
+  {title:"namie amuro LIVEGENIC 2015-2016", date:"2016.02.10", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE17", extra:"LIVEGENIC巡演，展現音樂魅力。", url:""},
+  {title:"namie amuro LIVE STYLE 2016-2017", date:"2017.05.03", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE18", extra:"LIVE STYLE巡演，舞台精彩。", url:""},
+  {title:"namie amuro Final Tour 2018 ～Finally～", date:"2018.08.29", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE19", extra:"告別巡演，為音樂生涯畫下完美句點。", url: "https://www.bilibili.com/video/BV1FSNkzmEgw"}
+];
+
+// 初始化首頁卡片
+function initCards(){
+  const categories=[
+    {id:'studioRow',arr:studio},
+    {id:'bestRow',arr:best},
+    {id:'concertsRow',arr:concerts}
+  ];
+  categories.forEach(c=>{
+    const row=document.getElementById(c.id);
+    c.arr.forEach(a=>{
+      const div=document.createElement('div');
+      div.className='card';
+      div.onclick = () => openModal(a);
+
+      const img = document.createElement('img');
+      img.src = a.cover || 'https://via.placeholder.com/150/888/fff?text=No+Image';
+
+      const title = document.createElement('div');
+      title.className='card-title';
+      title.innerText = a.title;
+
+      div.appendChild(img);
+      div.appendChild(title);
+      row.appendChild(div);
+    });
+  });
+}
+
+// 箭頭滾動
+function scrollRow(id){
+  const row=document.getElementById(id);
+  const cardWidth=row.querySelector('.card').offsetWidth+10;
+  row.scrollBy({left:cardWidth*3,behavior:'smooth'});
+}
+
+// 總覽頁
+function showOverview(category){
+  const ov = document.getElementById('overview');
+  ov.style.display = 'block'; 
+  ov.classList.add('slide-in');
+  document.getElementById('home').style.display = 'none';
+
+  const overviewList = document.getElementById('overview-list');
+  overviewList.innerHTML = '';
+
+  let arr = [];
+  let title = '';
+
+  switch(category){
+    case 'studio': arr = studio; title = '錄音室專輯'; break;
+    case 'best': arr = best; title = '精選輯'; break;
+    case 'concerts': arr = concerts; title = '演唱會 / DVD / Blu-ray'; break;
+  }
+
+  const h3 = document.createElement('h3');
+  h3.innerText = title;
+  overviewList.appendChild(h3);
+
+  arr.forEach(a=>{
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.onclick = () => openModal(a);
+
+    const img = document.createElement('img');
+    img.src = a.cover || 'https://via.placeholder.com/150/888/fff?text=No+Image';
+
+    const span = document.createElement('span');
+    span.innerText = a.title;
+
+    div.appendChild(img);
+    div.appendChild(span);
+    overviewList.appendChild(div);
+  });
+}
+
+// 返回首頁
+function showHome(){
+  document.getElementById('home').style.display='block';
+  document.getElementById('overview').style.display='none';
+}
+
+// 浮窗
+let currentData = null;
+function openModal(data){
+  currentData = data;
+  document.getElementById('title').innerText = data.title;
+  document.getElementById('tag').innerText = data.desc || '';
+  document.getElementById('desc').innerText = data.date ? `發行日期: ${data.date}` : '';
+  document.getElementById('extraDesc').innerText = data.extra || '';
+  document.getElementById('modal-cover').style.backgroundImage = `url(${data.cover||'https://via.placeholder.com/150/888/fff?text=No+Image'})`;
+
+  const watchBtn = document.getElementById('watchBtn');
+  if(data.url){
+    watchBtn.style.display = 'inline-block';
+  } else {
+    watchBtn.style.display = 'none';
+  }
+
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+}
+
+// 演唱會立即收看
+function watchConcert(){
+  if(currentData && currentData.url){
+    window.open(currentData.url, '_blank');
+  }
+}
+
+initCards();
+</script>
+
+</body>
+</html>
