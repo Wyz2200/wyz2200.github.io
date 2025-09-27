@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>手機版記帳簿 v4</title>
+<title>手機版記帳簿 v5</title>
 <style>
 :root{
   --bg-1:#efe6dc;
@@ -15,7 +15,8 @@
   --success:#2ecc71;
   --danger:#e74c3c;
   --glass-blur:14px;
-  --btn-color:#bfa8ff; /* 淡紫色 */
+  --btn-bg:#9b59b6; /* 深紫色 */
+  --btn-color:#fff; /* 白色文字 */
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
 }
 html,body{
@@ -65,7 +66,7 @@ button.btn{
   border:none;
   font-weight:600;
   cursor:pointer;
-  background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+  background: var(--btn-bg);
   color: var(--btn-color);
 }
 .tx{
@@ -83,7 +84,7 @@ button.btn{
   filter:blur(6px);
   animation: fadeIn .5s ease forwards;
 }
-.tx .meta{flex:1; display:flex; flex-direction:column;}
+.tx .meta{flex:1; display:flex; flex-direction:column; gap:8px;}
 .tx .title{font-weight:700;margin-bottom:4px;}
 .tx .desc{font-size:13px;color:var(--accent-soft);}
 .amount{min-width:70px;text-align:right;font-weight:700;}
@@ -105,6 +106,8 @@ input.customCategoryInput{
   margin-top:6px;
 }
 
+label{display:flex; flex-direction:column; font-size:13px; margin-bottom:6px;}
+
 @keyframes fadeIn{
   to{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
 }
@@ -123,23 +126,27 @@ input.customCategoryInput{
       <div class="big" id="balance">NT$ 0</div>
     </div>
     <form id="txForm">
-      <input type="text" id="title" placeholder="標題" required>
-      <input type="number" id="amount" placeholder="金額" required min="0" step="0.01">
-      <input type="text" id="note" placeholder="備註">
-      <select id="category">
-        <option value="food">餐飲</option>
-        <option value="transport">交通</option>
-        <option value="shopping">購物</option>
-        <option value="income">收入</option>
-        <option value="others">其他</option>
-        <option value="custom">自訂</option>
-      </select>
-      <input type="text" id="customCategory" class="customCategoryInput" placeholder="請輸入自訂類別" style="display:none;">
-      <select id="type">
-        <option value="expense">支出</option>
-        <option value="income">收入</option>
-      </select>
-      <input id="date" type="date">
+      <label>標題<input type="text" id="title" placeholder="標題" required></label>
+      <label>金額<input type="number" id="amount" placeholder="金額" required min="0" step="0.01"></label>
+      <label>備註<input type="text" id="note" placeholder="備註"></label>
+      <label>類別
+        <select id="category">
+          <option value="food">餐飲</option>
+          <option value="transport">交通</option>
+          <option value="shopping">購物</option>
+          <option value="income">收入</option>
+          <option value="others">其他</option>
+          <option value="custom">自訂</option>
+        </select>
+        <input type="text" id="customCategory" class="customCategoryInput" placeholder="請輸入自訂類別" style="display:none;">
+      </label>
+      <label>類型
+        <select id="type">
+          <option value="expense">支出</option>
+          <option value="income">收入</option>
+        </select>
+      </label>
+      <label>日期<input id="date" type="date"></label>
       <button type="submit" class="btn">新增</button>
     </form>
   </section>
@@ -151,13 +158,12 @@ input.customCategoryInput{
 </main>
 
 <script>
-const STORAGE_KEY="mobile_card_edit_v5";
+const STORAGE_KEY="mobile_card_edit_v6";
 let transactions=[];
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(transactions))}
 function load(){transactions=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
 function fmt(n){return "NT$ "+n.toLocaleString()}
 
-// 顯示列表
 function render(){
   const list=document.getElementById("txList");
   list.innerHTML="";
@@ -183,20 +189,17 @@ function render(){
   document.getElementById("balance").textContent=fmt(bal);
 }
 
-// 刪除交易
 function removeTx(index){
   transactions.splice(index,1);
   save();
   render();
 }
 
-// 類別選單控制自訂欄位
 document.getElementById("category").addEventListener("change",()=>{
   const val=document.getElementById("category").value;
   document.getElementById("customCategory").style.display=val==="custom"?"inline-block":"none";
 });
 
-// 新增交易
 document.getElementById("txForm").addEventListener("submit",e=>{
   e.preventDefault();
   let category=document.getElementById("category").value;
@@ -214,29 +217,30 @@ document.getElementById("txForm").addEventListener("submit",e=>{
   e.target.reset();
 });
 
-// 編輯卡片內
 function editCard(index){
   const div=document.getElementById("txList").children[index];
   const t=transactions[index];
   const meta=div.querySelector(`#meta-${index}`);
   meta.innerHTML=`
-    <input type="text" id="title-${index}" value="${t.title}" placeholder="標題">
-    <input type="number" id="amount-${index}" value="${t.amount}" placeholder="金額">
-    <input type="text" id="note-${index}" value="${t.note}" placeholder="備註">
-    <select id="category-${index}">
-      <option value="food">餐飲</option>
-      <option value="transport">交通</option>
-      <option value="shopping">購物</option>
-      <option value="income">收入</option>
-      <option value="others">其他</option>
-      <option value="custom">自訂</option>
-    </select>
-    <input type="text" id="custom-${index}" class="customCategoryInput" placeholder="請輸入自訂類別" style="display:none;">
-    <select id="type-${index}">
+    <label>標題<input type="text" id="title-${index}" value="${t.title}"></label>
+    <label>金額<input type="number" id="amount-${index}" value="${t.amount}"></label>
+    <label>備註<input type="text" id="note-${index}" value="${t.note}"></label>
+    <label>類別
+      <select id="category-${index}">
+        <option value="food">餐飲</option>
+        <option value="transport">交通</option>
+        <option value="shopping">購物</option>
+        <option value="income">收入</option>
+        <option value="others">其他</option>
+        <option value="custom">自訂</option>
+      </select>
+      <input type="text" id="custom-${index}" class="customCategoryInput" placeholder="請輸入自訂類別" style="display:none;">
+    </label>
+    <label>類型<select id="type-${index}">
       <option value="expense">支出</option>
       <option value="income">收入</option>
-    </select>
-    <input type="date" id="date-${index}" value="${t.date||''}">
+    </select></label>
+    <label>日期<input type="date" id="date-${index}" value="${t.date||''}"></label>
     <button onclick="saveCard(${index})" class="btn" style="margin-top:6px;">儲存</button>
   `;
   const catSelect=meta.querySelector(`#category-${index}`);
@@ -254,7 +258,6 @@ function editCard(index){
   });
 }
 
-// 儲存編輯卡片
 function saveCard(index){
   const div=document.getElementById("txList").children[index];
   const meta=div.querySelector(`#meta-${index}`);
