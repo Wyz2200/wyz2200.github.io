@@ -2,46 +2,47 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>手機版記帳簿</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>手機版記帳簿 v2</title>
 <style>
-:root {
-  --bg-1: #efe6dc;
-  --bg-2: #e2d2c0;
-  --card-bg: rgba(255,255,255,0.18);
-  --card-border: rgba(255,255,255,0.25);
-  --accent: rgba(48,41,38,0.95);
-  --accent-soft: rgba(48,41,38,0.65);
-  --success: #2ecc71;
-  --danger: #e74c3c;
-  --glass-blur: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
+:root{
+  --bg-1:#efe6dc;
+  --bg-2:#e2d2c0;
+  --card-bg:rgba(255,255,255,0.18);
+  --card-border:rgba(255,255,255,0.25);
+  --accent:rgba(48,41,38,0.95);
+  --accent-soft:rgba(48,41,38,0.65);
+  --success:#2ecc71;
+  --danger:#e74c3c;
+  --glass-blur:14px;
+  --btn-color:#bfa8ff; /* 淡紫色 */
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
 }
-body {
+html,body{
   margin:0;
+  padding:0;
   min-height:100vh;
-  background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
-  display:flex;
-  justify-content:center;
-  padding:16px;
+  overflow-y:auto;
+  background:linear-gradient(160deg,var(--bg-1) 0%,var(--bg-2) 100%);
   color:var(--accent);
 }
-main {
-  width:100%;
-  max-width:480px; /* 手機窄版 */
+main{
+  max-width:480px;
+  margin:0 auto;
   display:flex;
   flex-direction:column;
   gap:20px;
+  padding:16px;
 }
-.panel {
+.panel{
   position:relative;
   background: var(--card-bg);
   border-radius:20px;
   padding:16px;
-  box-shadow: 0 10px 30px rgba(17,12,10,0.12);
+  box-shadow:0 10px 30px rgba(17,12,10,0.12);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--card-border);
+  border:1px solid var(--card-border);
   overflow:hidden;
   transition: all .35s ease;
 }
@@ -67,6 +68,7 @@ button.btn{
   font-weight:600;
   cursor:pointer;
   background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+  color: var(--btn-color);
 }
 .tx{
   display:flex;
@@ -82,8 +84,8 @@ button.btn{
   filter:blur(6px);
   animation: fadeIn .5s ease forwards;
 }
-.tx.exit {
-  animation: fadeOut .45s ease forwards;
+.tx.exit{
+  animation: shrinkOut .45s ease forwards;
 }
 .tx .meta{flex:1;}
 .tx .title{font-weight:700;margin-bottom:4px;}
@@ -102,25 +104,28 @@ button.btn{
 }
 .empty{text-align:center;color:var(--accent-soft);padding:16px;}
 
-@keyframes fadeIn {
-  to {
+@keyframes fadeIn{
+  to{
     opacity:1;
     transform:translateY(0) scale(1);
     filter:blur(0);
   }
 }
-@keyframes fadeOut {
-  to {
+@keyframes shrinkOut{
+  to{
     opacity:0;
-    transform:translateY(10px) scale(0.95);
+    transform:scale(0.8);
     filter:blur(6px);
+    height:0;
+    margin-bottom:0;
+    padding:0;
   }
 }
 </style>
 </head>
 <body>
 <main>
-  <!-- 新增記帳 -->
+  <!-- 新增/編輯記帳 -->
   <section class="panel">
     <header>
       <h1>手機版記帳簿</h1>
@@ -131,6 +136,7 @@ button.btn{
       <div class="big" id="balance">NT$ 0</div>
     </div>
     <form id="txForm">
+      <input type="hidden" id="editIndex">
       <input type="text" id="title" placeholder="標題" required>
       <input type="number" id="amount" placeholder="金額" required min="0" step="0.01">
       <input type="text" id="note" placeholder="備註">
@@ -140,7 +146,9 @@ button.btn{
         <option value="shopping">購物</option>
         <option value="income">收入</option>
         <option value="others">其他</option>
+        <option value="custom">自訂</option>
       </select>
+      <input type="text" id="customCategory" placeholder="請輸入自訂類別" style="display:none;">
       <select id="type">
         <option value="expense">支出</option>
         <option value="income">收入</option>
@@ -161,11 +169,12 @@ button.btn{
 </main>
 
 <script>
-const STORAGE_KEY="vision_expense_mobile_v2";
+const STORAGE_KEY="vision_expense_mobile_v3";
 let transactions=[];
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(transactions))}
 function load(){transactions=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
 function fmt(n){return "NT$ "+n.toLocaleString()}
+
 function render(){
   const list=document.getElementById("txList");
   list.innerHTML="";
@@ -183,16 +192,19 @@ function render(){
         <div class="title">${t.title}<span class="tag">${t.category}</span></div>
         <div class="desc">${t.note||""} ${t.date||""}</div>
       </div>
-      <div class="amount ${t.type==="income"?"positive":"negative"}">
-        ${t.type==="income"?"+":"-"}${t.amount}
+      <div class="amount ${t.type==="income"?"positive":"negative"}">${t.type==="income"?"+":"-"}${t.amount}</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="editTx(${i})" style="border:none;background:none;color:#bfa8ff;font-size:16px;cursor:pointer;">✎</button>
+        <button onclick="removeTx(${i})" style="border:none;background:none;color:#999;font-size:18px;cursor:pointer;">✕</button>
       </div>
-      <button onclick="removeTx(${i})" style="border:none;background:none;color:#999;font-size:18px;cursor:pointer;">✕</button>
     `;
     list.appendChild(div);
     bal += t.type==="income"? t.amount : -t.amount;
   });
   document.getElementById("balance").textContent=fmt(bal);
 }
+
+// 刪除
 function removeTx(index){
   const txList=document.getElementById("txList");
   const item=txList.children[index];
@@ -201,24 +213,60 @@ function removeTx(index){
     setTimeout(()=>{
       transactions.splice(index,1);
       save();render();
-    },400);
+    },450);
   }
 }
+
+// 編輯
+function editTx(index){
+  const t=transactions[index];
+  document.getElementById("editIndex").value=index;
+  document.getElementById("title").value=t.title;
+  document.getElementById("amount").value=t.amount;
+  document.getElementById("note").value=t.note;
+  document.getElementById("category").value=["food","transport","shopping","income","others"].includes(t.category)?t.category:"custom";
+  if(document.getElementById("category").value==="custom"){
+    document.getElementById("customCategory").style.display="block";
+    document.getElementById("customCategory").value=t.category;
+  } else {
+    document.getElementById("customCategory").style.display="none";
+  }
+  document.getElementById("type").value=t.type;
+  document.getElementById("date").value=t.date;
+}
+
+// 類別選單
+document.getElementById("category").addEventListener("change",()=>{
+  if(document.getElementById("category").value==="custom"){
+    document.getElementById("customCategory").style.display="block";
+  } else {
+    document.getElementById("customCategory").style.display="none";
+  }
+});
+
+// 新增/編輯表單
 document.getElementById("txForm").addEventListener("submit",e=>{
   e.preventDefault();
+  let category=document.getElementById("category").value;
+  if(category==="custom") category=document.getElementById("customCategory").value || "自訂";
   const t={
     title:title.value,
     amount:Number(amount.value),
     note:note.value,
-    category:category.value,
+    category,
     type:type.value,
     date:date.value
   };
-  transactions.unshift(t);
-  save();
-  render();
-  e.target.reset();
+  const editIndex=document.getElementById("editIndex").value;
+  if(editIndex===""){
+    transactions.unshift(t);
+  } else {
+    transactions[editIndex]=t;
+    document.getElementById("editIndex").value="";
+  }
+  save();render();e.target.reset();
 });
+
 load();render();
 </script>
 </body>
