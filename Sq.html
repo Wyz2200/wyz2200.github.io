@@ -1,284 +1,642 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>安室奈美惠作品牆</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>簡約記帳（Vision Pro 式毛玻璃）</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#111;color:#fff;}
-h2{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-h2 button{background:none;border:none;color:#0af;font-size:18px;cursor:pointer;}
-h3{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-h3 button{background:none;border:none;color:#0af;font-size:16px;cursor:pointer;}
-.cards-container{position:relative;display:flex;align-items:center;margin-bottom:30px;}
-.cards-row{display:flex;overflow-x:auto;scroll-behavior:smooth;gap:10px;padding:10px 0;}
-.cards-row::-webkit-scrollbar{display:none;}
-.cards-row{-ms-overflow-style:none;scrollbar-width:none;}
-.card{
-  flex:0 0 auto;
-  width:140px;
-  cursor:pointer;
-  text-align:center;
-  border-radius:8px;
-  background:#222;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
+  :root{
+    --bg-1: #efe6dc; /* 米白基底 */
+    --bg-2: #e2d2c0; /* 米咖啡漸層 */
+    --card-bg: rgba(255,255,255,0.18);
+    --card-border: rgba(255,255,255,0.25);
+    --accent: rgba(48,41,38,0.95);
+    --accent-soft: rgba(48,41,38,0.65);
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --glass-blur: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
+  }
 
-.card img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-  border: none;       /* 加這行 */
-  display: block;     /* 避免 inline 造成空隙 */
-}
+  /* Background like milky coffee with subtle grain */
+  body{
+    margin:0;
+    min-height:100vh;
+    background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    color:var(--accent);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    background-attachment: fixed;
+  }
 
-.card-title{padding:5px;font-size:14px;color:#fff;}
-.arrow-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:35px;height:35px;font-size:20px;cursor:pointer;}
-#overview{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#111;padding:20px;box-sizing:border-box;overflow-y:auto;}
-.item{display:flex;align-items:center;margin:8px 0;padding:5px;background:#222;border-radius:6px;cursor:pointer;}
-.item img{width:50px;height:50px;object-fit:cover;border-radius:4px;margin-right:10px;}
-.item span{color:#fff;}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s ease;}
-.modal.show{opacity:1;pointer-events:auto;}
-.modal-content{
-  background:white;color:#000;border-radius:12px;padding:20px;width:90%;max-width:500px;display:flex;gap:15px;transform:translateY(20px);transition:transform .3s ease;
-  flex-direction:row; /* 左圖右文字 */
-  align-items:flex-start;
-}
-.modal.show .modal-content{transform:translateY(0);}
+  /* container to give centered app card with drop */
+  .app{
+    width:100%;
+    max-width:1100px;
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:28px;
+    align-items:start;
+  }
 
-.cover{
-  width:120px;       /* 調整寬度 */
-  height:180px;      /* 調整高度，變成高圖 */
-  background:#ccc;
-  border-radius:8px;
-  background-size:cover;
-  background-position:center;
-  flex-shrink:0;
-}
+  /* Left panel (controls) and right panel (list) */
+  .panel{
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+    border-radius:20px;
+    padding:20px;
+    box-shadow: 0 10px 30px rgba(17,12,10,0.12);
+    position:relative;
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--card-border);
+  }
 
-.info{flex:1;margin-top:0;}
-.tag{display:inline-block;background:#eee;padding:4px 8px;border-radius:12px;margin:5px 0;}
-.desc-text{margin-top:10px;color:#333;white-space:pre-line;}
-.close-btn,.watch-btn{margin-top:10px;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;}
-.close-btn{background:#2196f3;color:white;}
-.watch-btn{background:#ff69b4;color:white;float:right;}
-@keyframes slide-in{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
-.slide-in{animation:slide-in 0.5s forwards;}
+  /* subtle top highlight to mimic Vision Pro cards */
+  .panel::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  /* Header */
+  header h1{
+    margin:0 0 8px 0;
+    font-size:20px;
+    letter-spacing:0.2px;
+  }
+  header p{
+    margin:0;
+    color:var(--accent-soft);
+    font-size:13px;
+  }
+
+  /* balance card */
+  .balance{
+    margin-top:16px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .balance .big{
+    flex:1;
+    font-size:28px;
+    font-weight:700;
+  }
+  .balance .small{
+    color:var(--accent-soft);
+    font-size:13px;
+  }
+
+  /* form */
+  form.row{
+    display:grid;
+    grid-template-columns: 1fr 100px;
+    gap:10px;
+    margin-top:18px;
+  }
+  input, select{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.06);
+    background: rgba(255,255,255,0.6);
+    outline:none;
+    font-size:14px;
+    box-shadow: 0 2px 6px rgba(17,12,10,0.03);
+  }
+  input:focus, select:focus, textarea:focus{
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+  .controls{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  button.btn{
+    padding:10px 12px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+    background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+    color:var(--accent);
+    box-shadow: 0 6px 18px rgba(17,12,10,0.06);
+  }
+  button.primary{
+    background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+  }
+  button.ghost{
+    background: transparent;
+    border:1px dashed rgba(255,255,255,0.06);
+  }
+
+  /* right side: list area */
+  .right{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  /* each transaction card */
+  .tx-list{
+    display:grid;
+    gap:12px;
+  }
+  .tx{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+    border:1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .tx .meta{
+    flex:1;
+  }
+  .tx .title{
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .tx .desc{
+    font-size:13px;
+    color:var(--accent-soft);
+  }
+  .tx .amount{
+    min-width:120px;
+    text-align:right;
+    font-weight:700;
+    font-size:16px;
+  }
+  .tag{
+    display:inline-block;
+    padding:6px 8px;
+    border-radius:999px;
+    font-size:12px;
+    margin-right:6px;
+    background: rgba(255,255,255,0.06);
+    color:var(--accent-soft);
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .amount.positive{ color: var(--success); }
+  .amount.negative{ color: var(--danger); }
+
+  /* small toolbar on top of list */
+  .toolbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .toolbar .left{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .search{
+    min-width:220px;
+  }
+
+  /* empty state */
+  .empty{
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    color:var(--accent-soft);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border:1px dashed rgba(255,255,255,0.04);
+  }
+
+  /* responsive */
+  @media (max-width:980px){
+    .app{ grid-template-columns: 1fr; padding:0; }
+    .panel{ padding:16px; }
+  }
+
+  /* small utility */
+  .muted{ color:var(--accent-soft); font-size:13px; }
+  .flex{ display:flex; gap:8px; align-items:center; }
+  .pill{ padding:6px 10px; border-radius:999px; background: rgba(255,255,255,0.04); font-size:13px; }
+  .right .summary-row{
+    display:flex;
+    gap:12px;
+  }
+  .summary-card{
+    flex:1;
+    padding:12px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+    text-align:center;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .summary-card .num{ font-weight:800; font-size:18px; margin-top:6px; }
+  .small-note{ font-size:12px; color:var(--accent-soft); margin-top:8px; }
+  .tx .actions{ display:flex; gap:8px; margin-left:12px; align-items:center;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:10px;border:none;background:transparent;cursor:pointer;
+  }
+
 </style>
 </head>
 <body>
+  <main class="app" role="application" aria-label="簡約記帳">
+    <!-- LEFT: controls -->
+    <section class="panel" aria-labelledby="appTitle">
+      <header>
+        <h1 id="appTitle">簡約記帳</h1>
+        <p>Vision Pro 風格毛玻璃介面 • 自動存檔（localStorage）</p>
+      </header>
 
-<!-- 首頁 -->
-<div id="home">
-  <h2>作品牆</h2>
+      <div class="balance" aria-live="polite">
+        <div>
+          <div class="small">餘額</div>
+          <div class="big" id="balance">NT$ 0</div>
+        </div>
+        <div class="small" style="text-align:right">
+          <div class="muted">總收入 <div id="total-income" class="pill">NT$ 0</div></div>
+          <div class="muted">總支出 <div id="total-expense" class="pill">NT$ 0</div></div>
+        </div>
+      </div>
 
-  <h3>錄音室專輯 <button onclick="showOverview('studio')">›</button></h3>
-  <div class="cards-container">
-    <div class="cards-row" id="studioRow"></div>
-    <button class="arrow-btn" onclick="scrollRow('studioRow')">›</button>
-  </div>
+      <form id="txForm" class="row" autocomplete="off" aria-label="新增或編輯帳目">
+        <input type="text" id="title" placeholder="標題（例如：早餐）" required />
+        <input type="number" id="amount" placeholder="金額" required min="0" step="0.01" />
+        <input type="text" id="note" placeholder="備註（可選）" style="grid-column:1 / -1" />
+        <div style="display:flex;gap:10px;grid-column:1 / -1;margin-top:6px;">
+          <select id="category" aria-label="類別">
+            <option value="food">餐飲（food）</option>
+            <option value="transport">交通（transport）</option>
+            <option value="shopping">購物（shopping）</option>
+            <option value="income">收入（income）</option>
+            <option value="others">其他（others）</option>
+          </select>
+          <select id="type" aria-label="收支類型">
+            <option value="expense">支出</option>
+            <option value="income">收入</option>
+          </select>
+          <input id="date" type="date" style="flex:1" />
+        </div>
+        <div style="grid-column:1 / -1" class="controls">
+          <button type="submit" class="btn primary" id="saveBtn">新增</button>
+          <button type="button" class="btn ghost" id="resetBtn">清除表單</button>
+          <div style="flex:1"></div>
+          <button type="button" class="btn" id="exportBtn">匯出 JSON</button>
+          <button type="button" class="btn" id="importBtn">匯入 JSON</button>
+        </div>
+      </form>
 
-  <h3>精選輯 <button onclick="showOverview('best')">›</button></h3>
-  <div class="cards-container">
-    <div class="cards-row" id="bestRow"></div>
-    <button class="arrow-btn" onclick="scrollRow('bestRow')">›</button>
-  </div>
+      <div class="small-note">提示：點選右側每筆卡片的編輯鍵可把資料回填到左側表單（編輯後按儲存）</div>
+    </section>
 
-  <h3>演唱會 / DVD / Blu-ray <button onclick="showOverview('concerts')">›</button></h3>
-  <div class="cards-container">
-    <div class="cards-row" id="concertsRow"></div>
-    <button class="arrow-btn" onclick="scrollRow('concertsRow')">›</button>
-  </div>
-</div>
+    <!-- RIGHT: list & filters -->
+    <section class="right">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="left">
+            <div class="flex">
+              <select id="filterCategory">
+                <option value="all">全部類別</option>
+                <option value="food">餐飲</option>
+                <option value="transport">交通</option>
+                <option value="shopping">購物</option>
+                <option value="income">收入</option>
+                <option value="others">其他</option>
+              </select>
+              <select id="filterType">
+                <option value="all">全部</option>
+                <option value="expense">支出</option>
+                <option value="income">收入</option>
+              </select>
+              <select id="sortBy">
+                <option value="date_desc">日期（新→舊）</option>
+                <option value="date_asc">日期（舊→新）</option>
+                <option value="amount_desc">金額（大→小）</option>
+                <option value="amount_asc">金額（小→大）</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <input id="search" class="search" placeholder="搜尋標題或備註..." />
+          </div>
+        </div>
 
-<!-- 總覽 -->
-<div id="overview">
-  <h2>作品總覽 <button onclick="showHome()">‹</button></h2>
-  <div id="overview-list"></div>
-</div>
+        <div class="tx-list" id="txList" aria-live="polite" style="margin-top:12px;">
+          <!-- transactions injected here -->
+        </div>
 
-<!-- 浮窗 -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <div class="cover" id="modal-cover"></div>
-    <div class="info">
-      <h3 id="title"></h3>
-      <div class="tag" id="tag"></div>
-      <p id="desc"></p>
-      <div class="desc-text" id="extraDesc"></div>
-      <button class="close-btn" onclick="closeModal()">關閉</button>
-      <button class="watch-btn" id="watchBtn" style="display:none;" onclick="watchConcert()">立即收看</button>
-    </div>
-  </div>
-</div>
+        <div id="empty" class="empty" style="display:none;margin-top:12px;">
+          目前沒有任何記錄 — 新增你的第一筆帳目吧 📝
+        </div>
+      </div>
+
+      <!-- small summary row -->
+      <div class="summary-row">
+        <div class="panel summary-card">
+          <div class="muted">本月收入</div>
+          <div class="num" id="thisMonthIncome">NT$ 0</div>
+        </div>
+        <div class="panel summary-card">
+          <div class="muted">本月支出</div>
+          <div class="num" id="thisMonthExpense">NT$ 0</div>
+        </div>
+        <div class="panel summary-card">
+          <div class="muted">筆數</div>
+          <div class="num" id="countAll">0</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
 
 <script>
-// 資料範例
+/* -------------------------
+  Data structure & storage
+  ------------------------- */
+const STORAGE_KEY = "vision_expense_v1";
 
-// 12張錄音室專輯
-const studio=[
-  {title:"DANCE TRACKS VOL.1",date:"1995.06.16",desc:"首張錄音室專輯",cover:"https://via.placeholder.com/150/888/fff?text=DANCE", extra:"這張專輯包含她的出道單曲和初期代表曲，是安室音樂生涯的起點。"},
-  {title:"Sweet 19 Blues",date:"1996.07.22",desc:"人氣專輯",cover:"https://via.placeholder.com/150/888/fff?text=S19B", extra:"專輯中收錄了多首熱門單曲，奠定她的超人氣地位。"},
-  {title:"Concentration 20",date:"1997.07.24",desc:"第三張錄音室專輯",cover:"https://via.placeholder.com/150/888/fff?text=C20", extra:"專輯風格多樣，展現了她音樂上的多元嘗試。"},
-  {title:"Genius 2000",date:"2000.01.26",desc:"第4張專輯",cover:"https://via.placeholder.com/150/888/fff?text=G2000", extra:"融合了多種音樂風格，展現了她的音樂才華。"},
-  {title:"Break the Rules",date:"2000.12.20",desc:"第5張專輯",cover:"https://via.placeholder.com/150/888/fff?text=BTR", extra:"專輯風格成熟，展現她的音樂轉變。"},
-  {title:"Style",date:"2003.12.10",desc:"第6張專輯",cover:"https://via.placeholder.com/150/888/fff?text=STYLE", extra:"專輯風格多樣，展現她的音樂多元性。"},
-  {title:"Queen of Hip-Pop",date:"2005.07.13",desc:"第7張專輯",cover:"https://via.placeholder.com/150/888/fff?text=QHP", extra:"專輯風格以嘻哈為主，展現她的音樂實驗。"},
-  {title:"Play",date:"2007.06.27",desc:"第8張專輯",cover:"https://via.placeholder.com/150/888/fff?text=PLAY", extra:"專輯風格以流行為主，展現她的音樂才華。"},
-  {title:"Past < Future",date:"2009.12.16",desc:"第9張專輯",cover:"https://via.placeholder.com/150/888/fff?text=PF", extra:"專輯風格融合了過去與未來的元素。"},
-  {title:"Uncontrolled",date:"2012.06.27",desc:"第10張專輯",cover:"https://via.placeholder.com/150/888/fff?text=UNC", extra:"專輯風格自由多變，展現了她的音樂多樣性。"},
-  {title:"Feel",date:"2013.07.10",desc:"第11張專輯",cover:"https://via.placeholder.com/150/888/fff?text=FEEL", extra:"專輯風格情感豐富，展現了她的音樂深度。"},
-  {title:"Genic",date:"2015.06.10",desc:"第12張專輯",cover:"https://via.placeholder.com/150/888/fff?text=GENIC", extra:"專輯風格以電子流行為主，展現她的音樂實驗。"},
-];
+let transactions = []; // {id, title, note, amount, type, category, date}
+let editingId = null;
 
-// 精選輯
-const best = [
-  {title:"181920", date:"1998.01.28", desc:"第一張精選輯", cover:"https://upload.wikimedia.org/wikipedia/zh/e/ec/181920.JPG", extra:"精選出她前期最受歡迎的歌曲。"},
-  {title:"BEST FICTION", date:"2008.09.10", desc:"第二張精選輯", cover:"https://via.placeholder.com/150/888/fff?text=BEST+FICTION", extra:"收錄了她的多首熱門歌曲，展現了她的音樂魅力。"},
-  {title:"Ballada", date:"2014.06.04", desc:"抒情精選", cover:"https://via.placeholder.com/150/888/fff?text=BALLADA", extra:"收錄了多首經典情歌，是她的告別精選輯之一。"},
-  {title:"Finally", date:"2017.11.08", desc:"第三張精選輯", cover:"https://via.placeholder.com/150/888/fff?text=Finally", extra:"收錄她的45首經典歌曲，為音樂生涯畫下完美句點。"},
-];
+/* -------------------------
+  Helpers
+  ------------------------- */
+const $ = (sel) => document.querySelector(sel);
+const $all = (sel) => Array.from(document.querySelectorAll(sel));
 
-// 演唱會 19 部
-const concerts=[
-  {title:"namie amuro FIRST ANNIVERSARY 1996 LIVE at Marine Stadium", date:"1996.08.21", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE1", extra:"首次大型演唱會，展現初期舞台魅力。", url:""},
-  {title:"namie amuro SUMMER PRESENTS '97 MARINE STADIUM LIVE", date:"1997.08.06", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE2", extra:"大型夏季演唱會，人氣飆升。", url:""},
-  {title:"namie amuro tour 1997 A CONCERT TOUR", date:"1998.03.18", desc:"VHS／LD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE3", extra:"首次巡演演唱會，展現舞台實力。", url:""},
-  {title:"genius 2000 tour", date:"2000.12.20", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE4", extra:"Genius 2000專輯巡演，帶來精彩舞台表演。", url:""},
-  {title:"break the rules tour 2001", date:"2001.12.05", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE5", extra:"Break the Rules專輯巡演，演出高能。", url:""},
-  {title:"namie amuro tour 2002 STYLE", date:"2002.12.04", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE6", extra:"STYLE專輯巡演，風格多樣。", url:""},
-  {title:"namie amuro SO CRAZY tour featuring BEST singles 2003-2004", date:"2003.12.10", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE7", extra:"回顧精選單曲巡演，人氣爆棚。", url:""},
-  {title:"namie amuro LIVE STYLE 2005", date:"2005.06.01", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE8", extra:"LIVE STYLE巡演，舞台設計華麗。", url:""},
-  {title:"namie amuro BEST tour “Live Style 2006”", date:"2006.05.17", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE9", extra:"精選巡演，表演精彩紛呈。", url:""},
-  {title:"namie amuro PLAY tour 2007", date:"2007.08.22", desc:"DVD版本", cover:"https://via.placeholder.com/150/888/fff?text=LIVE10", extra:"PLAY專輯巡演，舞台充滿活力。", url:""},
-  {title:"namie amuro BEST FICTION tour 2008-2009", date:"2009.09.09", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE11", extra:"BEST FICTION巡演，經典歌曲集。", url:""},
-  {title:"namie amuro PAST＜FUTURE tour 2010", date:"2011.12.21", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE12", extra:"PAST＜FUTURE巡演，融合舊作與新作。", url:""},
-  {title:"namie amuro LIVE STYLE 2011", date:"2012.08.29", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE13", extra:"LIVE STYLE巡演，舞台設計亮眼。", url:""},
-  {title:"namie amuro 5 Major Domes Tour 2012 〜20th Anniversary Best〜", date:"2013.02.27", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE14", extra:"20周年大型巡演，五大巨蛋盛況。", url:""},
-  {title:"namie amuro FEEL tour 2013", date:"2014.02.26", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE15", extra:"FEEL專輯巡演，情感豐富。", url:""},
-  {title:"namie amuro LIVE STYLE 2014", date:"2015.02.11", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE16", extra:"LIVE STYLE巡演，舞台表演出色。", url:""},
-  {title:"namie amuro LIVEGENIC 2015-2016", date:"2016.02.10", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE17", extra:"LIVEGENIC巡演，展現音樂魅力。", url:""},
-  {title:"namie amuro LIVE STYLE 2016-2017", date:"2017.05.03", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE18", extra:"LIVE STYLE巡演，舞台精彩。", url:""},
-  {title:"namie amuro Final Tour 2018 ～Finally～", date:"2018.08.29", desc:"DVD／Blu-ray", cover:"https://via.placeholder.com/150/888/fff?text=LIVE19", extra:"告別巡演，為音樂生涯畫下完美句點。", url: "https://www.bilibili.com/video/BV1FSNkzmEgw"}
-];
-
-// 初始化首頁卡片
-function initCards(){
-  const categories=[
-    {id:'studioRow',arr:studio},
-    {id:'bestRow',arr:best},
-    {id:'concertsRow',arr:concerts}
-  ];
-  categories.forEach(c=>{
-    const row=document.getElementById(c.id);
-    c.arr.forEach(a=>{
-      const div=document.createElement('div');
-      div.className='card';
-      div.onclick = () => openModal(a);
-
-      const img = document.createElement('img');
-      img.src = a.cover || 'https://via.placeholder.com/150/888/fff?text=No+Image';
-
-      const title = document.createElement('div');
-      title.className='card-title';
-      title.innerText = a.title;
-
-      div.appendChild(img);
-      div.appendChild(title);
-      row.appendChild(div);
-    });
-  });
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
-
-// 箭頭滾動
-function scrollRow(id){
-  const row=document.getElementById(id);
-  const cardWidth=row.querySelector('.card').offsetWidth+10;
-  row.scrollBy({left:cardWidth*3,behavior:'smooth'});
+function fmtCurrency(n){
+  const sign = n < 0 ? "-" : "";
+  return sign + "NT$ " + Math.abs(n).toLocaleString('zh-TW', {minimumFractionDigits: 0, maximumFractionDigits: 2});
 }
-
-// 總覽頁
-function showOverview(category){
-  const ov = document.getElementById('overview');
-  ov.style.display = 'block'; 
-  ov.classList.add('slide-in');
-  document.getElementById('home').style.display = 'none';
-
-  const overviewList = document.getElementById('overview-list');
-  overviewList.innerHTML = '';
-
-  let arr = [];
-  let title = '';
-
-  switch(category){
-    case 'studio': arr = studio; title = '錄音室專輯'; break;
-    case 'best': arr = best; title = '精選輯'; break;
-    case 'concerts': arr = concerts; title = '演唱會 / DVD / Blu-ray'; break;
+function saveToStorage(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+}
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) transactions = JSON.parse(raw);
+    else transactions = [];
+  }catch(e){
+    console.error("load error", e);
+    transactions = [];
   }
-
-  const h3 = document.createElement('h3');
-  h3.innerText = title;
-  overviewList.appendChild(h3);
-
-  arr.forEach(a=>{
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.onclick = () => openModal(a);
-
-    const img = document.createElement('img');
-    img.src = a.cover || 'https://via.placeholder.com/150/888/fff?text=No+Image';
-
-    const span = document.createElement('span');
-    span.innerText = a.title;
-
-    div.appendChild(img);
-    div.appendChild(span);
-    overviewList.appendChild(div);
-  });
 }
 
-// 返回首頁
-function showHome(){
-  document.getElementById('home').style.display='block';
-  document.getElementById('overview').style.display='none';
-}
-
-// 浮窗
-let currentData = null;
-function openModal(data){
-  currentData = data;
-  document.getElementById('title').innerText = data.title;
-  document.getElementById('tag').innerText = data.desc || '';
-  document.getElementById('desc').innerText = data.date ? `發行日期: ${data.date}` : '';
-  document.getElementById('extraDesc').innerText = data.extra || '';
-  document.getElementById('modal-cover').style.backgroundImage = `url(${data.cover||'https://via.placeholder.com/150/888/fff?text=No+Image'})`;
-
-  const watchBtn = document.getElementById('watchBtn');
-  if(data.url){
-    watchBtn.style.display = 'inline-block';
+/* -------------------------
+  CRUD
+  ------------------------- */
+function addOrUpdateTx(data){
+  if(editingId){
+    const idx = transactions.findIndex(t => t.id === editingId);
+    if(idx >= 0){
+      transactions[idx] = {...transactions[idx], ...data};
+      editingId = null;
+      $("#saveBtn").textContent = "新增";
+    }
   } else {
-    watchBtn.style.display = 'none';
+    transactions.unshift({...data, id: uid()});
+  }
+  saveToStorage();
+  render();
+}
+
+function deleteTx(id){
+  transactions = transactions.filter(t => t.id !== id);
+  saveToStorage();
+  render();
+}
+
+function startEdit(id){
+  const t = transactions.find(x=>x.id===id);
+  if(!t) return;
+  editingId = id;
+  $("#title").value = t.title;
+  $("#amount").value = Math.abs(t.amount);
+  $("#note").value = t.note || "";
+  $("#category").value = t.category;
+  $("#type").value = t.type;
+  $("#date").value = t.date ? t.date.slice(0,10) : "";
+  $("#saveBtn").textContent = "儲存變更";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* -------------------------
+  Rendering
+  ------------------------- */
+function render(){
+  // filters
+  const filterCategory = $("#filterCategory").value;
+  const filterType = $("#filterType").value;
+  const search = $("#search").value.trim().toLowerCase();
+  const sortBy = $("#sortBy").value;
+
+  let list = transactions.slice();
+
+  // search
+  if(search){
+    list = list.filter(t => (t.title || "").toLowerCase().includes(search) || (t.note || "").toLowerCase().includes(search));
+  }
+  // category filter
+  if(filterCategory !== "all"){
+    list = list.filter(t => t.category === filterCategory);
+  }
+  // type filter
+  if(filterType !== "all"){
+    list = list.filter(t => t.type === filterType);
   }
 
-  document.getElementById('modal').classList.add('show');
-}
-function closeModal(){
-  document.getElementById('modal').classList.remove('show');
-}
+  // sort
+  list.sort((a,b) => {
+    if(sortBy === "date_desc") return (new Date(b.date || b._created||b.id)) - (new Date(a.date || a._created||a.id));
+    if(sortBy === "date_asc") return (new Date(a.date || a._created||a.id)) - (new Date(b.date || b._created||b.id));
+    if(sortBy === "amount_desc") return Math.abs(b.amount) - Math.abs(a.amount);
+    if(sortBy === "amount_asc") return Math.abs(a.amount) - Math.abs(b.amount);
+    return 0;
+  });
 
-// 演唱會立即收看
-function watchConcert(){
-  if(currentData && currentData.url){
-    window.open(currentData.url, '_blank');
+  const txList = $("#txList");
+  txList.innerHTML = "";
+  if(list.length === 0){
+    $("#empty").style.display = "block";
+  } else {
+    $("#empty").style.display = "none";
   }
+
+  for(const t of list){
+    const card = document.createElement("div");
+    card.className = "tx";
+    const date = t.date ? new Date(t.date) : null;
+    const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}` : "";
+
+    const typeTag = t.type === "income" ? '<span class="tag">收入</span>' : '<span class="tag">支出</span>';
+    const catTag = `<span class="tag">${t.category}</span>`;
+
+    card.innerHTML = `
+      <div class="meta">
+        <div class="title">${escapeHtml(t.title)} ${catTag}</div>
+        <div class="desc">${escapeHtml(t.note || "")} <span class="muted">${dateStr}</span></div>
+      </div>
+      <div class="amount ${t.type === 'income'? 'positive' : 'negative'}">${t.type === 'income' ? '+' : '-'} ${Number(t.amount).toLocaleString()}</div>
+      <div class="actions">
+        <button class="icon-btn" title="編輯" data-id="${t.id}" aria-label="編輯"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="icon-btn" title="刪除" data-del="${t.id}" aria-label="刪除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6M10 6V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    `;
+    txList.appendChild(card);
+  }
+
+  // bind action buttons
+  $all('.icon-btn[title="編輯"]').forEach(el => el.addEventListener('click', e => startEdit(e.currentTarget.dataset.id)));
+  $all('.icon-btn[title="刪除"]').forEach(el => el.addEventListener('click', e => {
+    const id = e.currentTarget.dataset.del;
+    if(confirm('確定要刪除這筆記錄嗎？')) deleteTx(id);
+  }));
+
+  updateSummary();
 }
 
-initCards();
+/* -------------------------
+  Stats / summary
+  ------------------------- */
+function updateSummary(){
+  const totalIncome = transactions.filter(t=>t.type==='income').reduce((s,t)=>s + Number(t.amount),0);
+  const totalExpense = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s + Number(t.amount),0);
+  const balance = totalIncome - totalExpense;
+
+  $("#total-income").textContent = fmtCurrency(totalIncome);
+  $("#total-expense").textContent = fmtCurrency(totalExpense);
+  $("#balance").textContent = fmtCurrency(balance);
+
+  // this month summary
+  const now = new Date();
+  const thisMonthIncome = transactions.filter(t=>t.type==='income' && new Date(t.date || t.id).getMonth()===now.getMonth() && new Date(t.date || t.id).getFullYear()===now.getFullYear()).reduce((s,t)=>s + Number(t.amount),0);
+  const thisMonthExpense = transactions.filter(t=>t.type==='expense' && new Date(t.date || t.id).getMonth()===now.getMonth() && new Date(t.date || t.id).getFullYear()===now.getFullYear()).reduce((s,t)=>s + Number(t.amount),0);
+
+  $("#thisMonthIncome").textContent = fmtCurrency(thisMonthIncome);
+  $("#thisMonthExpense").textContent = fmtCurrency(thisMonthExpense);
+  $("#countAll").textContent = transactions.length;
+}
+
+/* -------------------------
+  Form handling
+  ------------------------- */
+document.getElementById('txForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const title = $("#title").value.trim();
+  const amt = Number($("#amount").value);
+  const note = $("#note").value.trim();
+  const category = $("#category").value;
+  const type = $("#type").value;
+  const date = $("#date").value || (new Date()).toISOString();
+
+  if(!title || !amt || amt <= 0){
+    alert('請輸入合理的標題與金額（>0）');
+    return;
+  }
+
+  // store amount positive and type marks whether income/expense
+  addOrUpdateTx({ title, amount: amt, note, category, type, date });
+  // reset form
+  this.reset();
+  editingId = null;
+  $("#saveBtn").textContent = "新增";
+});
+
+$("#resetBtn").addEventListener('click', function(){
+  document.getElementById('txForm').reset();
+  editingId = null;
+  $("#saveBtn").textContent = "新增";
+});
+
+/* -------------------------
+  Filters / search bindings
+  ------------------------- */
+["#filterCategory","#filterType","#sortBy"].forEach(sel => {
+  $(sel).addEventListener('change', render);
+});
+$("#search").addEventListener('input', debounce(render, 220));
+
+/* -------------------------
+  Export / Import
+  ------------------------- */
+$("#exportBtn").addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(transactions, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'transactions.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+$("#importBtn").addEventListener('click', ()=>{
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(Array.isArray(data)){
+          // basic validation
+          const safe = data.every(d => d.title && d.amount && d.type);
+          if(!safe) throw new Error('格式錯誤');
+          transactions = data;
+          saveToStorage();
+          render();
+          alert('匯入完成');
+        } else {
+          alert('檔案不是有效的交易列表');
+        }
+      }catch(err){
+        alert('匯入失敗：' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
+/* -------------------------
+  Utilities
+  ------------------------- */
+function debounce(fn, ms=200){
+  let t;
+  return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), ms); };
+}
+function escapeHtml(s){
+  if(!s) return "";
+  return s.replace(/[&<>"']/g, function(m){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]);
+  });
+}
+
+/* -------------------------
+  Init
+  ------------------------- */
+(function init(){
+  loadFromStorage();
+  render();
+  // default date to today in form
+  const dt = new Date().toISOString().slice(0,10);
+  $("#date").value = dt;
+})();
+
 </script>
-
 </body>
 </html>
