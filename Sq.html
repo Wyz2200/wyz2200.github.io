@@ -281,6 +281,12 @@ function saveCard(index){
   transactions[index]={title,amount,note,category,type,date};
   save();render();
 }
+  // 設定日期欄位預設為今天
+document.addEventListener("DOMContentLoaded", ()=>{
+  const dateInput = document.getElementById("date");
+  const today = new Date().toISOString().split("T")[0]; // 轉換成 YYYY-MM-DD
+  dateInput.value = today;
+});
 
 load();render();
 </script>
