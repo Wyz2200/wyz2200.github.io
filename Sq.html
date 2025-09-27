@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>簡約記帳（Vision Pro 式毛玻璃）</title>
+<title>簡約記帳（Vision Pro 風格）</title>
 <style>
   :root{
-    --bg-1: #efe6dc; /* 米白基底 */
-    --bg-2: #e2d2c0; /* 米咖啡漸層 */
+    --bg-1: #efe6dc;
+    --bg-2: #e2d2c0;
     --card-bg: rgba(255,255,255,0.18);
     --card-border: rgba(255,255,255,0.25);
     --accent: rgba(48,41,38,0.95);
@@ -15,47 +15,33 @@
     --success: #2ecc71;
     --danger: #e74c3c;
     --glass-blur: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
   }
-
-  /* Background like milky coffee with subtle grain */
   body{
     margin:0;
     min-height:100vh;
     background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
     display:flex;
-    align-items:center;
     justify-content:center;
-    padding:32px;
+    padding:16px;
     color:var(--accent);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    background-attachment: fixed;
   }
-
-  /* container to give centered app card with drop */
-  .app{
+  main.app{
     width:100%;
-    max-width:1100px;
-    display:grid;
-    grid-template-columns: 360px 1fr;
-    gap:28px;
-    align-items:start;
+    max-width:480px; /* 手機為主，窄版 */
+    display:flex;
+    flex-direction:column;
+    gap:20px;
   }
-
-  /* Left panel (controls) and right panel (list) */
   .panel{
     background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
     border-radius:20px;
-    padding:20px;
+    padding:16px;
     box-shadow: 0 10px 30px rgba(17,12,10,0.12);
-    position:relative;
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--card-border);
   }
-
-  /* subtle top highlight to mimic Vision Pro cards */
   .panel::before{
     content:"";
     position:absolute;
@@ -64,579 +50,117 @@
     pointer-events:none;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   }
-
-  /* Header */
-  header h1{
-    margin:0 0 8px 0;
-    font-size:20px;
-    letter-spacing:0.2px;
-  }
-  header p{
-    margin:0;
-    color:var(--accent-soft);
-    font-size:13px;
-  }
-
-  /* balance card */
-  .balance{
-    margin-top:16px;
-    display:flex;
-    gap:12px;
-    align-items:center;
-  }
-  .balance .big{
-    flex:1;
-    font-size:28px;
-    font-weight:700;
-  }
-  .balance .small{
-    color:var(--accent-soft);
-    font-size:13px;
-  }
-
-  /* form */
-  form.row{
-    display:grid;
-    grid-template-columns: 1fr 100px;
-    gap:10px;
-    margin-top:18px;
-  }
-  input, select{
+  header h1{margin:0 0 6px;font-size:20px;}
+  header p{margin:0;font-size:13px;color:var(--accent-soft);}
+  .balance{margin-top:12px;}
+  .balance .big{font-size:26px;font-weight:700;}
+  .balance .small{font-size:13px;color:var(--accent-soft);}
+  form.row{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  input,select{
     padding:10px 12px;
     border-radius:12px;
     border:1px solid rgba(0,0,0,0.06);
     background: rgba(255,255,255,0.6);
-    outline:none;
     font-size:14px;
-    box-shadow: 0 2px 6px rgba(17,12,10,0.03);
   }
-  input:focus, select:focus, textarea:focus{
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  }
-  .controls{
-    margin-top:14px;
-    display:flex;
-    gap:10px;
-    align-items:center;
-  }
+  .controls{display:flex;flex-wrap:wrap;gap:8px;}
   button.btn{
-    padding:10px 12px;
+    flex:1;
+    padding:10px;
     border-radius:12px;
     border:none;
-    cursor:pointer;
     font-weight:600;
-    background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
-    color:var(--accent);
-    box-shadow: 0 6px 18px rgba(17,12,10,0.06);
-  }
-  button.primary{
+    cursor:pointer;
     background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
   }
-  button.ghost{
-    background: transparent;
-    border:1px dashed rgba(255,255,255,0.06);
-  }
-
-  /* right side: list area */
-  .right{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-  }
-
-  /* each transaction card */
-  .tx-list{
-    display:grid;
-    gap:12px;
-  }
-  .tx{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:12px;
-    border-radius:14px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
-    border:1px solid rgba(255,255,255,0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  .tx .meta{
-    flex:1;
-  }
-  .tx .title{
-    font-weight:700;
-    margin-bottom:4px;
-  }
-  .tx .desc{
-    font-size:13px;
-    color:var(--accent-soft);
-  }
-  .tx .amount{
-    min-width:120px;
-    text-align:right;
-    font-weight:700;
-    font-size:16px;
-  }
-  .tag{
-    display:inline-block;
-    padding:6px 8px;
-    border-radius:999px;
-    font-size:12px;
-    margin-right:6px;
-    background: rgba(255,255,255,0.06);
-    color:var(--accent-soft);
-    border:1px solid rgba(255,255,255,0.03);
-  }
-  .amount.positive{ color: var(--success); }
-  .amount.negative{ color: var(--danger); }
-
-  /* small toolbar on top of list */
-  .toolbar{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .toolbar .left{
-    display:flex;
-    gap:8px;
-    align-items:center;
-  }
-  .search{
-    min-width:220px;
-  }
-
-  /* empty state */
-  .empty{
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
-    color:var(--accent-soft);
-    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-    border:1px dashed rgba(255,255,255,0.04);
-  }
-
-  /* responsive */
-  @media (max-width:980px){
-    .app{ grid-template-columns: 1fr; padding:0; }
-    .panel{ padding:16px; }
-  }
-
-  /* small utility */
-  .muted{ color:var(--accent-soft); font-size:13px; }
-  .flex{ display:flex; gap:8px; align-items:center; }
-  .pill{ padding:6px 10px; border-radius:999px; background: rgba(255,255,255,0.04); font-size:13px; }
-  .right .summary-row{
-    display:flex;
-    gap:12px;
-  }
-  .summary-card{
-    flex:1;
-    padding:12px;
-    border-radius:12px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-    text-align:center;
-    border:1px solid rgba(255,255,255,0.03);
-  }
-  .summary-card .num{ font-weight:800; font-size:18px; margin-top:6px; }
-  .small-note{ font-size:12px; color:var(--accent-soft); margin-top:8px; }
-  .tx .actions{ display:flex; gap:8px; margin-left:12px; align-items:center;}
-  .icon-btn{
-    width:36px;height:36px;border-radius:10px;border:none;background:transparent;cursor:pointer;
-  }
-
+  .right{display:flex;flex-direction:column;gap:12px;}
+  .tx{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0.04));
+      border:1px solid rgba(255,255,255,0.06);}
+  .tx .meta{flex:1;}
+  .tx .title{font-weight:700;margin-bottom:4px;}
+  .tx .desc{font-size:13px;color:var(--accent-soft);}
+  .amount{min-width:70px;text-align:right;font-weight:700;}
+  .amount.positive{color:var(--success);}
+  .amount.negative{color:var(--danger);}
+  .tag{display:inline-block;padding:4px 6px;border-radius:999px;font-size:11px;margin-right:4px;
+       background:rgba(255,255,255,0.06);color:var(--accent-soft);}
+  .empty{text-align:center;color:var(--accent-soft);padding:16px;}
 </style>
 </head>
 <body>
-  <main class="app" role="application" aria-label="簡約記帳">
-    <!-- LEFT: controls -->
-    <section class="panel" aria-labelledby="appTitle">
-      <header>
-        <h1 id="appTitle">簡約記帳</h1>
-        <p>Vision Pro 風格毛玻璃介面 • 自動存檔（localStorage）</p>
-      </header>
-
-      <div class="balance" aria-live="polite">
-        <div>
-          <div class="small">餘額</div>
-          <div class="big" id="balance">NT$ 0</div>
-        </div>
-        <div class="small" style="text-align:right">
-          <div class="muted">總收入 <div id="total-income" class="pill">NT$ 0</div></div>
-          <div class="muted">總支出 <div id="total-expense" class="pill">NT$ 0</div></div>
-        </div>
+<main class="app">
+  <!-- 新增記帳 -->
+  <section class="panel">
+    <header>
+      <h1>簡約記帳</h1>
+      <p>Vision Pro 風格毛玻璃</p>
+    </header>
+    <div class="balance">
+      <div class="small">餘額</div>
+      <div class="big" id="balance">NT$ 0</div>
+    </div>
+    <form id="txForm" class="row">
+      <input type="text" id="title" placeholder="標題" required>
+      <input type="number" id="amount" placeholder="金額" required min="0" step="0.01">
+      <input type="text" id="note" placeholder="備註">
+      <select id="category">
+        <option value="food">餐飲</option>
+        <option value="transport">交通</option>
+        <option value="shopping">購物</option>
+        <option value="income">收入</option>
+        <option value="others">其他</option>
+      </select>
+      <select id="type">
+        <option value="expense">支出</option>
+        <option value="income">收入</option>
+      </select>
+      <input id="date" type="date">
+      <div class="controls">
+        <button type="submit" class="btn">新增</button>
+        <button type="reset" class="btn">清除</button>
       </div>
+    </form>
+  </section>
 
-      <form id="txForm" class="row" autocomplete="off" aria-label="新增或編輯帳目">
-        <input type="text" id="title" placeholder="標題（例如：早餐）" required />
-        <input type="number" id="amount" placeholder="金額" required min="0" step="0.01" />
-        <input type="text" id="note" placeholder="備註（可選）" style="grid-column:1 / -1" />
-        <div style="display:flex;gap:10px;grid-column:1 / -1;margin-top:6px;">
-          <select id="category" aria-label="類別">
-            <option value="food">餐飲（food）</option>
-            <option value="transport">交通（transport）</option>
-            <option value="shopping">購物（shopping）</option>
-            <option value="income">收入（income）</option>
-            <option value="others">其他（others）</option>
-          </select>
-          <select id="type" aria-label="收支類型">
-            <option value="expense">支出</option>
-            <option value="income">收入</option>
-          </select>
-          <input id="date" type="date" style="flex:1" />
-        </div>
-        <div style="grid-column:1 / -1" class="controls">
-          <button type="submit" class="btn primary" id="saveBtn">新增</button>
-          <button type="button" class="btn ghost" id="resetBtn">清除表單</button>
-          <div style="flex:1"></div>
-          <button type="button" class="btn" id="exportBtn">匯出 JSON</button>
-          <button type="button" class="btn" id="importBtn">匯入 JSON</button>
-        </div>
-      </form>
-
-      <div class="small-note">提示：點選右側每筆卡片的編輯鍵可把資料回填到左側表單（編輯後按儲存）</div>
-    </section>
-
-    <!-- RIGHT: list & filters -->
-    <section class="right">
-      <div class="panel">
-        <div class="toolbar">
-          <div class="left">
-            <div class="flex">
-              <select id="filterCategory">
-                <option value="all">全部類別</option>
-                <option value="food">餐飲</option>
-                <option value="transport">交通</option>
-                <option value="shopping">購物</option>
-                <option value="income">收入</option>
-                <option value="others">其他</option>
-              </select>
-              <select id="filterType">
-                <option value="all">全部</option>
-                <option value="expense">支出</option>
-                <option value="income">收入</option>
-              </select>
-              <select id="sortBy">
-                <option value="date_desc">日期（新→舊）</option>
-                <option value="date_asc">日期（舊→新）</option>
-                <option value="amount_desc">金額（大→小）</option>
-                <option value="amount_asc">金額（小→大）</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <input id="search" class="search" placeholder="搜尋標題或備註..." />
-          </div>
-        </div>
-
-        <div class="tx-list" id="txList" aria-live="polite" style="margin-top:12px;">
-          <!-- transactions injected here -->
-        </div>
-
-        <div id="empty" class="empty" style="display:none;margin-top:12px;">
-          目前沒有任何記錄 — 新增你的第一筆帳目吧 📝
-        </div>
-      </div>
-
-      <!-- small summary row -->
-      <div class="summary-row">
-        <div class="panel summary-card">
-          <div class="muted">本月收入</div>
-          <div class="num" id="thisMonthIncome">NT$ 0</div>
-        </div>
-        <div class="panel summary-card">
-          <div class="muted">本月支出</div>
-          <div class="num" id="thisMonthExpense">NT$ 0</div>
-        </div>
-        <div class="panel summary-card">
-          <div class="muted">筆數</div>
-          <div class="num" id="countAll">0</div>
-        </div>
-      </div>
-
-    </section>
-  </main>
+  <!-- 清單 -->
+  <section class="panel right">
+    <div id="txList"></div>
+    <div id="empty" class="empty">目前沒有記錄</div>
+  </section>
+</main>
 
 <script>
-/* -------------------------
-  Data structure & storage
-  ------------------------- */
-const STORAGE_KEY = "vision_expense_v1";
-
-let transactions = []; // {id, title, note, amount, type, category, date}
-let editingId = null;
-
-/* -------------------------
-  Helpers
-  ------------------------- */
-const $ = (sel) => document.querySelector(sel);
-const $all = (sel) => Array.from(document.querySelectorAll(sel));
-
-function uid(){
-  return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-}
-function fmtCurrency(n){
-  const sign = n < 0 ? "-" : "";
-  return sign + "NT$ " + Math.abs(n).toLocaleString('zh-TW', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-}
-function saveToStorage(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-}
-function loadFromStorage(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) transactions = JSON.parse(raw);
-    else transactions = [];
-  }catch(e){
-    console.error("load error", e);
-    transactions = [];
-  }
-}
-
-/* -------------------------
-  CRUD
-  ------------------------- */
-function addOrUpdateTx(data){
-  if(editingId){
-    const idx = transactions.findIndex(t => t.id === editingId);
-    if(idx >= 0){
-      transactions[idx] = {...transactions[idx], ...data};
-      editingId = null;
-      $("#saveBtn").textContent = "新增";
-    }
-  } else {
-    transactions.unshift({...data, id: uid()});
-  }
-  saveToStorage();
-  render();
-}
-
-function deleteTx(id){
-  transactions = transactions.filter(t => t.id !== id);
-  saveToStorage();
-  render();
-}
-
-function startEdit(id){
-  const t = transactions.find(x=>x.id===id);
-  if(!t) return;
-  editingId = id;
-  $("#title").value = t.title;
-  $("#amount").value = Math.abs(t.amount);
-  $("#note").value = t.note || "";
-  $("#category").value = t.category;
-  $("#type").value = t.type;
-  $("#date").value = t.date ? t.date.slice(0,10) : "";
-  $("#saveBtn").textContent = "儲存變更";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-/* -------------------------
-  Rendering
-  ------------------------- */
+const STORAGE_KEY="vision_expense_mobile";
+let transactions=[];
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(transactions))}
+function load(){transactions=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
+function fmt(n){return "NT$ "+n.toLocaleString()}
 function render(){
-  // filters
-  const filterCategory = $("#filterCategory").value;
-  const filterType = $("#filterType").value;
-  const search = $("#search").value.trim().toLowerCase();
-  const sortBy = $("#sortBy").value;
-
-  let list = transactions.slice();
-
-  // search
-  if(search){
-    list = list.filter(t => (t.title || "").toLowerCase().includes(search) || (t.note || "").toLowerCase().includes(search));
+  const list=document.getElementById("txList");
+  list.innerHTML="";
+  if(transactions.length===0){document.getElementById("empty").style.display="block";}
+  else{document.getElementById("empty").style.display="none";}
+  let bal=0;
+  for(const t of transactions){
+    const div=document.createElement("div");
+    div.className="tx";
+    div.innerHTML=`<div class="meta"><div class="title">${t.title}<span class="tag">${t.category}</span></div>
+                   <div class="desc">${t.note||""} ${t.date||""}</div></div>
+                   <div class="amount ${t.type==="income"?"positive":"negative"}">
+                   ${t.type==="income"?"+":"-"}${t.amount}</div>`;
+    list.appendChild(div);
+    bal += t.type==="income"? t.amount : -t.amount;
   }
-  // category filter
-  if(filterCategory !== "all"){
-    list = list.filter(t => t.category === filterCategory);
-  }
-  // type filter
-  if(filterType !== "all"){
-    list = list.filter(t => t.type === filterType);
-  }
-
-  // sort
-  list.sort((a,b) => {
-    if(sortBy === "date_desc") return (new Date(b.date || b._created||b.id)) - (new Date(a.date || a._created||a.id));
-    if(sortBy === "date_asc") return (new Date(a.date || a._created||a.id)) - (new Date(b.date || b._created||b.id));
-    if(sortBy === "amount_desc") return Math.abs(b.amount) - Math.abs(a.amount);
-    if(sortBy === "amount_asc") return Math.abs(a.amount) - Math.abs(b.amount);
-    return 0;
-  });
-
-  const txList = $("#txList");
-  txList.innerHTML = "";
-  if(list.length === 0){
-    $("#empty").style.display = "block";
-  } else {
-    $("#empty").style.display = "none";
-  }
-
-  for(const t of list){
-    const card = document.createElement("div");
-    card.className = "tx";
-    const date = t.date ? new Date(t.date) : null;
-    const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}` : "";
-
-    const typeTag = t.type === "income" ? '<span class="tag">收入</span>' : '<span class="tag">支出</span>';
-    const catTag = `<span class="tag">${t.category}</span>`;
-
-    card.innerHTML = `
-      <div class="meta">
-        <div class="title">${escapeHtml(t.title)} ${catTag}</div>
-        <div class="desc">${escapeHtml(t.note || "")} <span class="muted">${dateStr}</span></div>
-      </div>
-      <div class="amount ${t.type === 'income'? 'positive' : 'negative'}">${t.type === 'income' ? '+' : '-'} ${Number(t.amount).toLocaleString()}</div>
-      <div class="actions">
-        <button class="icon-btn" title="編輯" data-id="${t.id}" aria-label="編輯"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="icon-btn" title="刪除" data-del="${t.id}" aria-label="刪除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6M10 6V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      </div>
-    `;
-    txList.appendChild(card);
-  }
-
-  // bind action buttons
-  $all('.icon-btn[title="編輯"]').forEach(el => el.addEventListener('click', e => startEdit(e.currentTarget.dataset.id)));
-  $all('.icon-btn[title="刪除"]').forEach(el => el.addEventListener('click', e => {
-    const id = e.currentTarget.dataset.del;
-    if(confirm('確定要刪除這筆記錄嗎？')) deleteTx(id);
-  }));
-
-  updateSummary();
+  document.getElementById("balance").textContent=fmt(bal);
 }
-
-/* -------------------------
-  Stats / summary
-  ------------------------- */
-function updateSummary(){
-  const totalIncome = transactions.filter(t=>t.type==='income').reduce((s,t)=>s + Number(t.amount),0);
-  const totalExpense = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s + Number(t.amount),0);
-  const balance = totalIncome - totalExpense;
-
-  $("#total-income").textContent = fmtCurrency(totalIncome);
-  $("#total-expense").textContent = fmtCurrency(totalExpense);
-  $("#balance").textContent = fmtCurrency(balance);
-
-  // this month summary
-  const now = new Date();
-  const thisMonthIncome = transactions.filter(t=>t.type==='income' && new Date(t.date || t.id).getMonth()===now.getMonth() && new Date(t.date || t.id).getFullYear()===now.getFullYear()).reduce((s,t)=>s + Number(t.amount),0);
-  const thisMonthExpense = transactions.filter(t=>t.type==='expense' && new Date(t.date || t.id).getMonth()===now.getMonth() && new Date(t.date || t.id).getFullYear()===now.getFullYear()).reduce((s,t)=>s + Number(t.amount),0);
-
-  $("#thisMonthIncome").textContent = fmtCurrency(thisMonthIncome);
-  $("#thisMonthExpense").textContent = fmtCurrency(thisMonthExpense);
-  $("#countAll").textContent = transactions.length;
-}
-
-/* -------------------------
-  Form handling
-  ------------------------- */
-document.getElementById('txForm').addEventListener('submit', function(e){
+document.getElementById("txForm").addEventListener("submit",e=>{
   e.preventDefault();
-  const title = $("#title").value.trim();
-  const amt = Number($("#amount").value);
-  const note = $("#note").value.trim();
-  const category = $("#category").value;
-  const type = $("#type").value;
-  const date = $("#date").value || (new Date()).toISOString();
-
-  if(!title || !amt || amt <= 0){
-    alert('請輸入合理的標題與金額（>0）');
-    return;
-  }
-
-  // store amount positive and type marks whether income/expense
-  addOrUpdateTx({ title, amount: amt, note, category, type, date });
-  // reset form
-  this.reset();
-  editingId = null;
-  $("#saveBtn").textContent = "新增";
+  const t={title:title.value,amount:Number(amount.value),note:note.value,
+           category:category.value,type:type.value,date:date.value};
+  transactions.unshift(t);save();render();e.target.reset();
 });
-
-$("#resetBtn").addEventListener('click', function(){
-  document.getElementById('txForm').reset();
-  editingId = null;
-  $("#saveBtn").textContent = "新增";
-});
-
-/* -------------------------
-  Filters / search bindings
-  ------------------------- */
-["#filterCategory","#filterType","#sortBy"].forEach(sel => {
-  $(sel).addEventListener('change', render);
-});
-$("#search").addEventListener('input', debounce(render, 220));
-
-/* -------------------------
-  Export / Import
-  ------------------------- */
-$("#exportBtn").addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(transactions, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'transactions.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
-$("#importBtn").addEventListener('click', ()=>{
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
-  input.onchange = (ev) => {
-    const file = ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const data = JSON.parse(reader.result);
-        if(Array.isArray(data)){
-          // basic validation
-          const safe = data.every(d => d.title && d.amount && d.type);
-          if(!safe) throw new Error('格式錯誤');
-          transactions = data;
-          saveToStorage();
-          render();
-          alert('匯入完成');
-        } else {
-          alert('檔案不是有效的交易列表');
-        }
-      }catch(err){
-        alert('匯入失敗：' + err.message);
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-});
-
-/* -------------------------
-  Utilities
-  ------------------------- */
-function debounce(fn, ms=200){
-  let t;
-  return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), ms); };
-}
-function escapeHtml(s){
-  if(!s) return "";
-  return s.replace(/[&<>"']/g, function(m){
-    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]);
-  });
-}
-
-/* -------------------------
-  Init
-  ------------------------- */
-(function init(){
-  loadFromStorage();
-  render();
-  // default date to today in form
-  const dt = new Date().toISOString().slice(0,10);
-  $("#date").value = dt;
-})();
-
+load();render();
 </script>
 </body>
 </html>
