@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>手機版記帳簿 v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>手機版記帳簿 v3 卡片編輯</title>
 <style>
 :root{
   --bg-1:#efe6dc;
@@ -59,9 +59,7 @@ input,select{
   background: rgba(255,255,255,0.6);
   font-size:14px;
 }
-.controls{display:flex;gap:8px;}
 button.btn{
-  flex:1;
   padding:10px;
   border-radius:12px;
   border:none;
@@ -73,6 +71,7 @@ button.btn{
 .tx{
   display:flex;
   align-items:center;
+  justify-content:space-between;
   gap:10px;
   padding:12px;
   border-radius:14px;
@@ -87,7 +86,7 @@ button.btn{
 .tx.exit{
   animation: shrinkOut .45s ease forwards;
 }
-.tx .meta{flex:1;}
+.tx .meta{flex:1; display:flex; flex-direction:column;}
 .tx .title{font-weight:700;margin-bottom:4px;}
 .tx .desc{font-size:13px;color:var(--accent-soft);}
 .amount{min-width:70px;text-align:right;font-weight:700;}
@@ -103,29 +102,23 @@ button.btn{
   color:var(--accent-soft);
 }
 .empty{text-align:center;color:var(--accent-soft);padding:16px;}
+input.customCategoryInput{
+  width:50%;
+  display:inline-block;
+  margin-top:6px;
+}
 
 @keyframes fadeIn{
-  to{
-    opacity:1;
-    transform:translateY(0) scale(1);
-    filter:blur(0);
-  }
+  to{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
 }
 @keyframes shrinkOut{
-  to{
-    opacity:0;
-    transform:scale(0.8);
-    filter:blur(6px);
-    height:0;
-    margin-bottom:0;
-    padding:0;
-  }
+  to{opacity:0; transform:scale(0.8); filter:blur(6px); height:0; margin-bottom:0; padding:0;}
 }
 </style>
 </head>
 <body>
 <main>
-  <!-- 新增/編輯記帳 -->
+  <!-- 餘額卡片 -->
   <section class="panel">
     <header>
       <h1>手機版記帳簿</h1>
@@ -135,66 +128,38 @@ button.btn{
       <div class="small">餘額</div>
       <div class="big" id="balance">NT$ 0</div>
     </div>
-    <form id="txForm">
-      <input type="hidden" id="editIndex">
-      <input type="text" id="title" placeholder="標題" required>
-      <input type="number" id="amount" placeholder="金額" required min="0" step="0.01">
-      <input type="text" id="note" placeholder="備註">
-      <select id="category">
-        <option value="food">餐飲</option>
-        <option value="transport">交通</option>
-        <option value="shopping">購物</option>
-        <option value="income">收入</option>
-        <option value="others">其他</option>
-        <option value="custom">自訂</option>
-      </select>
-      <input type="text" id="customCategory" placeholder="請輸入自訂類別" style="display:none;">
-      <select id="type">
-        <option value="expense">支出</option>
-        <option value="income">收入</option>
-      </select>
-      <input id="date" type="date">
-      <div class="controls">
-        <button type="submit" class="btn">新增</button>
-        <button type="reset" class="btn">清除</button>
-      </div>
-    </form>
   </section>
 
   <!-- 清單 -->
-  <section class="panel">
-    <div id="txList"></div>
-    <div id="empty" class="empty">目前沒有記錄</div>
-  </section>
+  <section class="panel" id="txList"></section>
+  <div id="empty" class="empty">目前沒有記錄</div>
+
 </main>
 
 <script>
-const STORAGE_KEY="vision_expense_mobile_v3";
+const STORAGE_KEY="mobile_card_edit_v1";
 let transactions=[];
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(transactions))}
 function load(){transactions=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
 function fmt(n){return "NT$ "+n.toLocaleString()}
 
+// 渲染列表
 function render(){
   const list=document.getElementById("txList");
   list.innerHTML="";
-  if(transactions.length===0){
-    document.getElementById("empty").style.display="block";
-  } else {
-    document.getElementById("empty").style.display="none";
-  }
+  if(transactions.length===0){document.getElementById("empty").style.display="block";}
+  else{document.getElementById("empty").style.display="none";}
   let bal=0;
   transactions.forEach((t,i)=>{
     const div=document.createElement("div");
     div.className="tx";
     div.innerHTML=`
-      <div class="meta">
+      <div class="meta" id="meta-${i}">
         <div class="title">${t.title}<span class="tag">${t.category}</span></div>
         <div class="desc">${t.note||""} ${t.date||""}</div>
       </div>
-      <div class="amount ${t.type==="income"?"positive":"negative"}">${t.type==="income"?"+":"-"}${t.amount}</div>
       <div style="display:flex;gap:6px;">
-        <button onclick="editTx(${i})" style="border:none;background:none;color:#bfa8ff;font-size:16px;cursor:pointer;">✎</button>
+        <button onclick="editCard(${i})" style="border:none;background:none;color:#bfa8ff;font-size:16px;cursor:pointer;">✎</button>
         <button onclick="removeTx(${i})" style="border:none;background:none;color:#999;font-size:18px;cursor:pointer;">✕</button>
       </div>
     `;
@@ -217,55 +182,63 @@ function removeTx(index){
   }
 }
 
-// 編輯
-function editTx(index){
+// 卡片內編輯
+function editCard(index){
+  const div=document.getElementById("txList").children[index];
   const t=transactions[index];
-  document.getElementById("editIndex").value=index;
-  document.getElementById("title").value=t.title;
-  document.getElementById("amount").value=t.amount;
-  document.getElementById("note").value=t.note;
-  document.getElementById("category").value=["food","transport","shopping","income","others"].includes(t.category)?t.category:"custom";
-  if(document.getElementById("category").value==="custom"){
-    document.getElementById("customCategory").style.display="block";
-    document.getElementById("customCategory").value=t.category;
+  const meta=div.querySelector(`#meta-${index}`);
+  meta.innerHTML=`
+    <input type="text" id="title-${index}" value="${t.title}" placeholder="標題">
+    <input type="number" id="amount-${index}" value="${t.amount}" placeholder="金額">
+    <input type="text" id="note-${index}" value="${t.note}" placeholder="備註">
+    <select id="category-${index}">
+      <option value="food">餐飲</option>
+      <option value="transport">交通</option>
+      <option value="shopping">購物</option>
+      <option value="income">收入</option>
+      <option value="others">其他</option>
+      <option value="custom">自訂</option>
+    </select>
+    <input type="text" id="custom-${index}" class="customCategoryInput" placeholder="請輸入自訂類別" style="display:none;">
+    <select id="type-${index}">
+      <option value="expense">支出</option>
+      <option value="income">收入</option>
+    </select>
+    <input type="date" id="date-${index}" value="${t.date||''}">
+    <button onclick="saveCard(${index})" class="btn" style="margin-top:6px;">儲存</button>
+  `;
+  // 設置類別值
+  const catSelect=meta.querySelector(`#category-${index}`);
+  if(["food","transport","shopping","income","others"].includes(t.category)){
+    catSelect.value=t.category;
   } else {
-    document.getElementById("customCategory").style.display="none";
+    catSelect.value="custom";
+    meta.querySelector(`#custom-${index}`).style.display="inline-block";
+    meta.querySelector(`#custom-${index}`).value=t.category;
   }
-  document.getElementById("type").value=t.type;
-  document.getElementById("date").value=t.date;
+  catSelect.addEventListener("change",()=>{
+    const cinput=meta.querySelector(`#custom-${index}`);
+    if(catSelect.value==="custom"){cinput.style.display="inline-block";}
+    else{cinput.style.display="none";}
+  });
 }
 
-// 類別選單
-document.getElementById("category").addEventListener("change",()=>{
-  if(document.getElementById("category").value==="custom"){
-    document.getElementById("customCategory").style.display="block";
-  } else {
-    document.getElementById("customCategory").style.display="none";
+// 儲存卡片編輯
+function saveCard(index){
+  const div=document.getElementById("txList").children[index];
+  const meta=div.querySelector(`#meta-${index}`);
+  const title=meta.querySelector(`#title-${index}`).value;
+  const amount=Number(meta.querySelector(`#amount-${index}`).value);
+  const note=meta.querySelector(`#note-${index}`).value;
+  const type=meta.querySelector(`#type-${index}`).value;
+  let category=meta.querySelector(`#category-${index}`).value;
+  if(category==="custom"){
+    category=meta.querySelector(`#custom-${index}`).value || "自訂";
   }
-});
-
-// 新增/編輯表單
-document.getElementById("txForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  let category=document.getElementById("category").value;
-  if(category==="custom") category=document.getElementById("customCategory").value || "自訂";
-  const t={
-    title:title.value,
-    amount:Number(amount.value),
-    note:note.value,
-    category,
-    type:type.value,
-    date:date.value
-  };
-  const editIndex=document.getElementById("editIndex").value;
-  if(editIndex===""){
-    transactions.unshift(t);
-  } else {
-    transactions[editIndex]=t;
-    document.getElementById("editIndex").value="";
-  }
-  save();render();e.target.reset();
-});
+  const date=meta.querySelector(`#date-${index}`).value;
+  transactions[index]={title,amount,note,category,type,date};
+  save();render();
+}
 
 load();render();
 </script>
