@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>手機版記帳簿 v8</title>
+<title>手機版記帳簿 v9</title>
 <style>
 :root{
   --bg-1:#efe6dc;
@@ -15,8 +15,8 @@
   --success:#2ecc71;
   --danger:#e74c3c;
   --glass-blur:14px;
-  --btn-bg: rgba(160,120,255,0.8); 
-  --btn-color:#fff; 
+  --btn-bg: rgba(160,120,255,0.8);
+  --btn-color:#fff;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
 }
 html,body{
@@ -53,6 +53,7 @@ header p{margin:0;font-size:13px;color:var(--accent-soft);}
 .balance .big{font-size:26px;font-weight:700;}
 .balance .small{font-size:13px;color:var(--accent-soft);}
 form{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+label{display:flex; flex-direction:column; font-size:13px; margin-bottom:6px; margin-left:4px; font-weight:600; color:#111;}
 input,select{
   padding:10px 12px;
   border-radius:12px;
@@ -63,7 +64,7 @@ input,select{
 button.btn{
   padding:10px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,0.25); /* 白色邊框 */
+  border:1px solid rgba(255,255,255,0.25);
   font-weight:600;
   cursor:pointer;
   background: linear-gradient(180deg, var(--btn-bg), rgba(160,120,255,0.6));
@@ -71,9 +72,7 @@ button.btn{
   filter: brightness(1.1);
   transition: all .2s ease;
 }
-button.btn:hover{
-  filter: brightness(1.25);
-}
+button.btn:hover{ filter: brightness(1.25); }
 .tx{
   display:flex;
   align-items:flex-start;
@@ -97,11 +96,11 @@ button.btn:hover{
 .amount.negative{color:var(--danger);}
 .tag{
   display:inline-block;
-  padding:4px 6px;
-  border-radius:999px;
-  font-size:11px;
+  padding:2px 8px;
+  border-radius:12px;
+  font-size:12px;
   margin-left:6px;
-  background:rgba(255,255,255,0.12);
+  background: rgba(160,120,255,0.3);
   color:var(--accent-soft);
 }
 .empty{text-align:center;color:var(--accent-soft);padding:16px;}
@@ -111,7 +110,6 @@ input.customCategoryInput{
   margin-left:0;
   margin-top:6px;
 }
-label{display:flex; flex-direction:column; font-size:13px; margin-bottom:6px;}
 .flex-row{display:flex; gap:10px; flex-wrap:wrap;}
 .flex-row > label{flex:1;}
 @keyframes fadeIn{
@@ -165,11 +163,28 @@ label{display:flex; flex-direction:column; font-size:13px; margin-bottom:6px;}
 </main>
 
 <script>
-const STORAGE_KEY="mobile_card_edit_v8";
+const STORAGE_KEY="mobile_card_edit_v9";
 let transactions=[];
+
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(transactions))}
 function load(){transactions=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
-function fmt(n){return "NT$ "+n.toLocaleString()}
+function fmt(n){return n.toLocaleString()}
+
+// 類別英文轉中文
+function mapCategory(cat){
+  const dict={food:"飲食", transport:"交通", shopping:"購物", income:"收入", others:"其他"};
+  return dict[cat]||cat;
+}
+
+// 日期預設今天
+document.addEventListener("DOMContentLoaded", ()=>{
+  const dateInput=document.getElementById("date");
+  if(dateInput){
+    const today=new Date().toISOString().split("T")[0];
+    dateInput.value=today;
+  }
+  load();render();
+});
 
 function render(){
   const list=document.getElementById("txList");
@@ -180,30 +195,22 @@ function render(){
   transactions.forEach((t,i)=>{
     const div=document.createElement("div");
     div.className="tx";
+    const sign = t.type==="income" ? "+" : "-";
     div.innerHTML=`
       <div class="meta" id="meta-${i}">
-        <div class="title">${t.title}<span class="tag">${t.category}</span></div>
+        <div class="title">${t.title}<span class="tag">${mapCategory(t.category)}</span></div>
         <div class="desc">${t.note||""} ${t.date||""}</div>
       </div>
-      <div class="amount ${t.type==="income"?"positive":"negative"}">${fmt(t.amount)}</div>
+      <div class="amount ${t.type==="income"?"positive":"negative"}">${sign}${fmt(t.amount)}</div>
       <div style="display:flex;gap:6px;">
-        <button onclick="editCard(${i})" style="border:none;background:none;color:#bfa8ff;font-size:16px;cursor:pointer;">✎</button>
+        <button onclick="editCard(${i})" style="border:none;background:none;color:#bfa8ff;font-size:20px;cursor:pointer;">✎</button>
         <button onclick="removeTx(${i})" style="border:none;background:none;color:#999;font-size:18px;cursor:pointer;">✕</button>
       </div>
     `;
     list.appendChild(div);
     bal += t.type==="income"? t.amount : -t.amount;
   });
-  document.getElementById("balance").textContent=fmt(bal);
-}
-
-function removeTx(index){
-  const t = transactions[index];
-  if(confirm(`確認要刪除 "${t.title}" 這筆交易嗎？`)){
-    transactions.splice(index,1);
-    save();
-    render();
-  }
+  document.getElementById("balance").textContent=(bal>=0?"+":"-")+fmt(Math.abs(bal));
 }
 
 document.getElementById("category").addEventListener("change",()=>{
@@ -287,7 +294,14 @@ function saveCard(index){
   save();render();
 }
 
-load();render();
+function removeTx(index){
+  const t = transactions[index];
+  if(confirm(`確認要刪除 "${t.title}" 這筆交易嗎？`)){
+    transactions.splice(index,1);
+    save();
+    render();
+  }
+}
 </script>
 </body>
 </html>
