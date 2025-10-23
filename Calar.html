@@ -247,15 +247,10 @@
     btn.addEventListener('click', () => {
       const k = btn.dataset.key;
       const action = btn.dataset.action;
-
-      if (k !== undefined && k !== null) {
-        appendDigit(k);
-      } else if (action === 'win' || action === 'lose') {
-        if (!state.buffer || Number(state.buffer) === 0) {
-          setMode(action);
-        } else {
-          apply(action);
-        }
+      if (k !== undefined && k !== null) appendDigit(k);
+      else if (action === 'win' || action === 'lose') {
+        if (!state.buffer || Number(state.buffer) === 0) setMode(action);
+        else apply(action);
       }
     });
   });
@@ -266,17 +261,14 @@
     state = { balance: 0, buffer: '0', mode: null, history: [] };
     saveState(); renderAll();
   });
-
   backspaceBtn.addEventListener('click', () => {
     if (!state.buffer || state.buffer === '0') return;
     state.buffer = state.buffer.slice(0, -1);
     if (state.buffer.length === 0) state.buffer = '0';
     saveState(); renderInput();
   });
-
   clearInputBtn.addEventListener('click', () => {
-    state.buffer = '0';
-    saveState(); renderInput();
+    state.buffer = '0'; saveState(); renderInput();
   });
 
   // --- delete record ---
@@ -292,21 +284,12 @@
 
   // --- keyboard support ---
   window.addEventListener('keydown', (e) => {
-    if (e.key >= '0' && e.key <= '9') {
-      appendDigit(e.key);
-    } else if (e.key === 'Enter') {
-      if (Number(state.buffer) > 0) {
-        apply(state.mode || 'win');
-      }
-    } else if (e.key === 'Backspace') {
-      backspaceBtn.click();
-    } else if (e.key.toLowerCase() === 'w') {
-      apply('win');
-    } else if (e.key.toLowerCase() === 'l') {
-      apply('lose');
-    } else if (e.key === 'Escape') {
-      closeSummary();
-    }
+    if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
+    else if (e.key === 'Enter' && Number(state.buffer) > 0) apply(state.mode || 'win');
+    else if (e.key === 'Backspace') backspaceBtn.click();
+    else if (e.key.toLowerCase() === 'w') apply('win');
+    else if (e.key.toLowerCase() === 'l') apply('lose');
+    else if (e.key === 'Escape') closeSummary();
   });
 
   // --- Summary (總結) ---
@@ -316,149 +299,116 @@
     sumLoseCountEl.textContent = formatNumber(loseCount);
     sumWinAmountEl.textContent = '+' + formatNumber(winAmount);
     sumLoseAmountEl.textContent = '-' + formatNumber(loseAmount);
-
     sumTotalValueEl.textContent = formatNumber(total);
     sumTotalValueEl.classList.remove('positive','negative','zero');
     if (total > 0) sumTotalValueEl.classList.add('positive');
     else if (total < 0) sumTotalValueEl.classList.add('negative');
     else sumTotalValueEl.classList.add('zero');
-
     openSummary();
   });
-
   summaryClose.addEventListener('click', closeSummary);
-  summaryBackdrop.addEventListener('click', (e) => {
-    if (e.target === summaryBackdrop) closeSummary();
-  });
-
-  function openSummary() {
-    summaryBackdrop.classList.add('show');
-    summaryBackdrop.setAttribute('aria-hidden', 'false');
-  }
-  function closeSummary() {
-    summaryBackdrop.classList.remove('show');
-    summaryBackdrop.setAttribute('aria-hidden', 'true');
-  }
+  summaryBackdrop.addEventListener('click', (e) => { if (e.target === summaryBackdrop) closeSummary(); });
+  function openSummary() { summaryBackdrop.classList.add('show'); }
+  function closeSummary() { summaryBackdrop.classList.remove('show'); }
 
   function computeSummary() {
     let winCount = 0, loseCount = 0, winAmount = 0, loseAmount = 0;
     for (const rec of state.history) {
-      if (rec.type === 'win') {
-        winCount++; winAmount += Number(rec.amount) || 0;
-      } else if (rec.type === 'lose') {
-        loseCount++; loseAmount += Number(rec.amount) || 0;
-      }
+      if (rec.type === 'win') { winCount++; winAmount += Number(rec.amount)||0; }
+      else if (rec.type === 'lose') { loseCount++; loseAmount += Number(rec.amount)||0; }
     }
-    const total = (winAmount - loseAmount);
-    return { winCount, loseCount, winAmount, loseAmount, total };
+    return { winCount, loseCount, winAmount, loseAmount, total: winAmount - loseAmount };
   }
 
   // --- helpers ---
   function appendDigit(d) {
-    if (state.buffer === '0') state.buffer = d;
-    else state.buffer += d;
+    state.buffer = (state.buffer === '0') ? d : state.buffer + d;
     saveState(); renderInput();
   }
-  function setMode(m) {
-    state.mode = m; saveState(); renderMode();
-  }
+  function setMode(m){ state.mode = m; saveState(); renderMode(); }
   function apply(type) {
-    const amt = Number(state.buffer || '0');
-    if (!amt) return;
+    const amt = Number(state.buffer||'0'); if (!amt) return;
     state.history.unshift({ t: Date.now(), type, amount: amt });
     state.buffer = '0'; state.mode = type;
     recomputeBalanceAndAfter(); saveState(); renderAll();
   }
   function recomputeBalanceAndAfter() {
     let running = 0;
-    for (let i = state.history.length - 1; i >= 0; i--) {
+    for (let i = state.history.length-1; i>=0; i--) {
       const rec = state.history[i];
-      const delta = rec.type === 'win' ? rec.amount : -rec.amount;
+      const delta = rec.type==='win'? rec.amount : -rec.amount;
       running += delta; rec.after = running;
     }
     state.balance = running;
   }
-  function renderAll() { renderBalance(); renderMode(); renderInput(); renderHistory(); }
-  function renderBalance() {
+  function renderAll(){ renderBalance(); renderMode(); renderInput(); renderHistory(); }
+  function renderBalance(){
     balanceEl.textContent = formatNumber(state.balance);
     balanceBox.classList.remove('positive','zero','negative');
-    if (state.balance > 0) balanceBox.classList.add('positive');
-    else if (state.balance < 0) balanceBox.classList.add('negative');
+    if (state.balance>0) balanceBox.classList.add('positive');
+    else if (state.balance<0) balanceBox.classList.add('negative');
     else balanceBox.classList.add('zero');
   }
-  function renderMode() {
-    if (state.mode === 'win') {
-      modeText.classList.add('mode-win'); modeText.classList.remove('mode-lose');
-      modeText.innerHTML = '目前模式：<strong>贏（加）</strong>';
-    } else if (state.mode === 'lose') {
-      modeText.classList.add('mode-lose'); modeText.classList.remove('mode-win');
-      modeText.innerHTML = '目前模式：<strong>輸（減）</strong>';
-    } else {
-      modeText.classList.remove('mode-win', 'mode-lose');
-      modeText.innerHTML = '目前模式：<strong>未選擇</strong>';
-    }
+  function renderMode(){
+    if (state.mode==='win'){ modeText.classList.add('mode-win'); modeText.classList.remove('mode-lose');
+      modeText.innerHTML='目前模式：<strong>贏（加）</strong>'; }
+    else if (state.mode==='lose'){ modeText.classList.add('mode-lose'); modeText.classList.remove('mode-win');
+      modeText.innerHTML='目前模式：<strong>輸（減）</strong>'; }
+    else { modeText.classList.remove('mode-win','mode-lose');
+      modeText.innerHTML='目前模式：<strong>未選擇</strong>'; }
   }
-  function renderInput() { currentInputEl.textContent = formatNumber(Number(state.buffer || 0)); }
-  function renderHistory() {
-    historyEl.innerHTML = '';
-    if (!state.history.length) {
-      historyEl.innerHTML = '<div class="muted">目前尚無紀錄</div>'; return;
-    }
-    state.history.forEach((rec, idx) => {
-      const row = document.createElement('div'); row.className = 'row';
-      const date = new Date(rec.t);
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth()+1).padStart(2,'0');
-      const dd = String(date.getDate()).padStart(2,'0');
-      const hh = String(date.getHours()).padStart(2,'0');
-      const mi = String(date.getMinutes()).padStart(2,'0');
-      const ss = String(date.getSeconds()).padStart(2,'0');
-      const timeStr = `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
+  function renderInput(){ currentInputEl.textContent = formatNumber(Number(state.buffer||0)); }
 
-      const timeCol = document.createElement('div');
-      timeCol.innerHTML = `<span class="muted">${timeStr}</span>`;
+  function renderHistory(){
+    historyEl.innerHTML='';
+    if(!state.history.length){ historyEl.innerHTML='<div class="muted">目前尚無紀錄</div>'; return; }
 
-      const typeCol = document.createElement('div');
-      const sign = rec.type === 'win' ? '+' : '-';
-      typeCol.innerHTML = `<span class="amt ${rec.type==='win'?'plus':'minus'}">${sign}${formatNumber(rec.amount)}</span>`;
-
-      const afterCol = document.createElement('div');
-      afterCol.innerHTML = `<span class="muted">剩餘：${formatNumber(rec.after ?? 0)}</span>`;
-
-      const delCol = document.createElement('div');
-      delCol.style.textAlign = 'right';
-      delCol.innerHTML = `<button class="btn del-btn btn-danger" data-del-index="${idx}">刪除</button>`;
-
-      row.appendChild(timeCol); row.appendChild(typeCol); row.appendChild(afterCol); row.appendChild(delCol);
+    const totalRecords = state.history.length;
+    state.history.forEach((rec,idx)=>{
+      const row=document.createElement('div');
+      row.className='row';
+      const numberCol=document.createElement('div');
+      numberCol.textContent = (totalRecords-idx).toString() + '.';
+      numberCol.style.textAlign='right';
+      const date=new Date(rec.t);
+      const timeStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+      const timeCol=document.createElement('div');
+      timeCol.innerHTML=`<span class="muted">${timeStr}</span>`;
+      const typeCol=document.createElement('div');
+      const sign=rec.type==='win'?'+':'-';
+      typeCol.innerHTML=`<span class="amt ${rec.type==='win'?'plus':'minus'}">${sign}${formatNumber(rec.amount)}</span>`;
+      const afterCol=document.createElement('div');
+      afterCol.innerHTML=`<span class="muted">剩餘：${formatNumber(rec.after??0)}</span>`;
+      const delCol=document.createElement('div');
+      delCol.style.textAlign='right';
+      delCol.innerHTML=`<button class="btn del-btn btn-danger" data-del-index="${idx}">刪除</button>`;
+      row.style.gridTemplateColumns='30px 110px 1fr 120px 68px';
+      row.append(numberCol,timeCol,typeCol,afterCol,delCol);
       historyEl.appendChild(row);
     });
   }
-  function formatNumber(n) { return Number(n).toLocaleString('zh-Hant-TW'); }
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { balance: 0, buffer: '0', mode: null, history: [] };
-      const s = JSON.parse(raw);
-      const st = {
-        balance: Number(s.balance) || 0,
-        buffer: typeof s.buffer === 'string' ? s.buffer : '0',
-        mode: (s.mode === 'win' || s.mode === 'lose') ? s.mode : null,
-        history: Array.isArray(s.history) ? s.history : []
-      };
+  function formatNumber(n){ return Number(n).toLocaleString('zh-Hant-TW'); }
+
+  function loadState(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw)return{balance:0,buffer:'0',mode:null,history:[]};
+      const s=JSON.parse(raw);
+      const st={balance:Number(s.balance)||0,buffer:typeof s.buffer==='string'?s.buffer:'0',
+        mode:(s.mode==='win'||s.mode==='lose')?s.mode:null,history:Array.isArray(s.history)?s.history:[]};
       recomputeBalanceAndAfterFrom(st); return st;
-    } catch { return { balance: 0, buffer: '0', mode: null, history: [] }; }
+    }catch{return{balance:0,buffer:'0',mode:null,history:[]};}
   }
-  function recomputeBalanceAndAfterFrom(st) {
-    let running = 0;
-    for (let i = st.history.length - 1; i >= 0; i--) {
-      const rec = st.history[i];
-      const delta = rec.type === 'win' ? rec.amount : -rec.amount;
-      running += delta; rec.after = running;
-    }
-    st.balance = running;
+  function recomputeBalanceAndAfterFrom(st){
+    let running=0;
+    for(let i=st.history.length-1;i>=0;i--){
+      const rec=st.history[i];
+      const delta=rec.type==='win'?rec.amount:-rec.amount;
+      running+=delta; rec.after=running;
+    } st.balance=running;
   }
-  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
 })();
 </script>
 </body>
