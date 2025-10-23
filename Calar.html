@@ -11,55 +11,68 @@
     margin: 20px; background:#f6f7fb; color:#222;
   }
   .wrap { max-width: 420px; margin: 0 auto; }
-  h1 { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 20px; font-weight: 700; margin: 0 0 12px; }
+
+  /* 剩餘金幣：放大 + 黃色 */
   .balance {
     background:#fff; border-radius:12px; padding:16px;
     display:flex; align-items:baseline; justify-content:space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,.05);
   }
-  .balance .label { color:#666; font-size:14px; }
-  .balance .value { font-size:28px; font-weight:800; letter-spacing:.5px; }
-  .controls { display:flex; gap: var(--gap); margin: 12px 0 16px; }
-  .controls input {
-    flex:1; font-size:18px; padding:10px 12px; border:1px solid #ddd; border-radius:10px; background:#fff;
+  .balance .label { color:#666; font-size:15px; }
+  .balance .value {
+    font-size: 40px;            /* 放大 */
+    font-weight: 900;
+    letter-spacing:.5px;
+    color: #ffcc00;             /* 黃色 */
   }
-  .controls button {
-    padding:10px 12px; border:none; border-radius:10px; background:#eee; cursor:pointer; font-weight:600;
+
+  /* 只有重設按鈕保留 */
+  .toolbar-top { display:flex; justify-content:flex-end; margin: 10px 0 16px; }
+  .toolbar-top button {
+    border:none; background:#f0f3f7; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
   }
-  .controls button:hover { filter: brightness(0.98); }
-  .pad {
-    display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap);
-  }
+  .toolbar-top button:hover { filter:brightness(.97); }
+
+  .mode-indicator { margin: 6px 0 8px; font-size:12px; color:#666; }
+  .mode-indicator strong { padding:2px 6px; border-radius:6px; }
+  .mode-win strong { background:#e8f9ef; color:#0a7a3f; }
+  .mode-lose strong { background:#ffecec; color:#b11212; }
+
+  .pad { display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
   .key {
     background:#fff; border:1px solid #e5e7eb; border-radius:12px;
-    padding:16px 0; font-size:22px; font-weight:700; text-align:center; cursor:pointer;
+    padding:18px 0; font-size:24px; font-weight:800; text-align:center; cursor:pointer;
     user-select:none; box-shadow: 0 1px 4px rgba(0,0,0,.04);
     transition: transform .02s ease-in;
   }
   .key:active { transform: scale(.98); }
   .key.action-win { background:#eefdf2; border-color:#c8f1d6; }
   .key.action-lose { background:#fff1f1; border-color:#ffd3d3; }
-  .mode-indicator {
-    margin: 10px 0 2px; font-size:12px; color:#666;
-  }
-  .mode-indicator strong { padding:2px 6px; border-radius:6px; }
-  .mode-win strong { background:#e8f9ef; color:#0a7a3f; }
-  .mode-lose strong { background:#ffecec; color:#b11212; }
+
   .section {
     margin-top: 18px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px;
     box-shadow: 0 2px 8px rgba(0,0,0,.04);
   }
-  .section h2 { font-size:16px; margin:0 0 10px; }
-  .history { max-height: 280px; overflow:auto; }
+  .section h2 { font-size:18px; margin:0 0 8px; }
+
+  /* 本次金額：放大顯示 */
+  #currentInput {
+    font-size: 36px;            /* 放大 */
+    font-weight: 900;
+  }
+
+  .history { max-height: 300px; overflow:auto; }
   .row {
-    display:grid; grid-template-columns: 86px 1fr 110px; gap:8px; padding:8px 0; border-bottom:1px dashed #eee;
+    display:grid; grid-template-columns: 92px 1fr 120px; gap:8px; padding:8px 0; border-bottom:1px dashed #eee;
     font-size:14px; align-items:center;
   }
   .row:last-child { border-bottom:none; }
-  .amt.plus { color:#0a7a3f; font-weight:700; }
-  .amt.minus { color:#b11212; font-weight:700; }
+  .amt.plus { color:#0a7a3f; font-weight:800; }
+  .amt.minus { color:#b11212; font-weight:800; }
   .muted { color:#888; font-size:12px; }
-  .toolbar { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+
+  .toolbar { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
   .toolbar button {
     border:none; background:#f0f3f7; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12px;
   }
@@ -75,9 +88,7 @@
       <div class="value" id="balance">0</div>
     </div>
 
-    <div class="controls">
-      <input id="startInput" type="number" inputmode="numeric" placeholder="設定初始金幣（可選）" />
-      <button id="applyStart">設定</button>
+    <div class="toolbar-top">
       <button id="resetAll" title="清空金額與歷史">重設</button>
     </div>
 
@@ -103,7 +114,8 @@
     </div>
 
     <div class="section">
-      <h2>本次金額：<span id="currentInput">0</span></h2>
+      <h2>本次金額：</h2>
+      <div id="currentInput">0</div>
       <div class="toolbar">
         <button id="backspace">退格</button>
         <button id="clearInput">清零</button>
@@ -126,8 +138,6 @@
   const currentInputEl = $('#currentInput');
   const historyEl = $('#history');
 
-  const startInput = $('#startInput');
-  const applyStartBtn = $('#applyStart');
   const resetAllBtn = $('#resetAll');
   const backspaceBtn = $('#backspace');
   const clearInputBtn = $('#clearInput');
@@ -135,14 +145,13 @@
   const STORAGE_KEY = 'winloss_recorder_v1';
   let state = loadState();
 
-  /*** state shape
+  /** state:
    * { balance: number, buffer: string, mode: 'win'|'lose'|null, history: Array<{t:number, type:'win'|'lose', amount:number, after:number}> }
-   ***/
+   */
 
-  // ---- init render ----
   renderAll();
 
-  // ---- keypad events ----
+  // --- keypad ---
   $$('#pad .key').forEach(btn => {
     btn.addEventListener('click', () => {
       const k = btn.dataset.key;
@@ -151,25 +160,16 @@
       if (k !== undefined && k !== null) {
         appendDigit(k);
       } else if (action === 'win' || action === 'lose') {
-        // 如果目前沒有輸入金額，但想先選模式，就只切換模式
         if (!state.buffer || Number(state.buffer) === 0) {
           setMode(action);
         } else {
-          // 有輸入金額 -> 直接套用並記錄
           apply(action);
         }
       }
     });
   });
 
-  // ---- control buttons ----
-  applyStartBtn.addEventListener('click', () => {
-    const v = Number(startInput.value || 0);
-    if (!Number.isFinite(v)) return;
-    state.balance = Math.trunc(v);
-    saveState(); renderAll();
-  });
-
+  // --- controls ---
   resetAllBtn.addEventListener('click', () => {
     if (!confirm('確定要清空剩餘金幣與所有紀錄嗎？')) return;
     state = { balance: 0, buffer: '0', mode: null, history: [] };
@@ -188,13 +188,13 @@
     saveState(); renderInput();
   });
 
-  // ---- keyboard support (optional) ----
+  // --- keyboard (optional) ---
   window.addEventListener('keydown', (e) => {
     if (e.key >= '0' && e.key <= '9') {
       appendDigit(e.key);
     } else if (e.key === 'Enter') {
       if (Number(state.buffer) > 0) {
-        apply(state.mode || 'win'); // 未選模式預設視為「贏」
+        apply(state.mode || 'win');
       }
     } else if (e.key === 'Backspace') {
       backspaceBtn.click();
@@ -205,7 +205,7 @@
     }
   });
 
-  // ---- helpers ----
+  // --- helpers ---
   function appendDigit(d) {
     if (state.buffer === '0') state.buffer = d;
     else state.buffer += d;
@@ -232,7 +232,7 @@
     });
 
     state.buffer = '0';
-    state.mode = type; // 保留最後一次模式
+    state.mode = type;
     saveState(); renderAll();
   }
 
@@ -248,8 +248,6 @@
   }
 
   function renderMode() {
-    const pad = $('#pad');
-    pad.dataset.mode = state.mode || '';
     if (state.mode === 'win') {
       modeText.classList.add('mode-win');
       modeText.classList.remove('mode-lose');
@@ -278,10 +276,13 @@
       const row = document.createElement('div');
       row.className = 'row';
       const date = new Date(rec.t);
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth()+1).padStart(2,'0');
+      const dd = String(date.getDate()).padStart(2,'0');
       const hh = String(date.getHours()).padStart(2,'0');
-      const mm = String(date.getMinutes()).padStart(2,'0');
+      const mi = String(date.getMinutes()).padStart(2,'0');
       const ss = String(date.getSeconds()).padStart(2,'0');
-      const timeStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${hh}:${mm}:${ss}`;
+      const timeStr = `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
 
       const timeCol = document.createElement('div');
       timeCol.innerHTML = `<span class="muted">${timeStr}</span>`;
@@ -309,7 +310,6 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return { balance: 0, buffer: '0', mode: null, history: [] };
       const s = JSON.parse(raw);
-      // 基本防呆
       return {
         balance: Number(s.balance) || 0,
         buffer: typeof s.buffer === 'string' ? s.buffer : '0',
