@@ -2,71 +2,120 @@
 <html lang="zh-Hant">
 <head>
   <link rel="apple-touch-icon" href="icon.png">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>輸贏紀錄器 🀄️</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>輸贏紀錄器 🀄️</title>
 <style>
-  :root { --gap: 10px; }
+  :root {
+    --gap: 10px;
+    --bg: #f6f7fb;
+    --fg: #222;
+    --card: #fff;
+    --muted: #888;
+    --border: #e5e7eb;
+    --btn: #eef2f7;
+    --plus: #0a7a3f;
+    --minus: #b11212;
+    --gold: #ffcc00;
+    --danger: #d33;
+  }
+
+  /* 暗色主題覆寫（套在 <body class="dark-mode">） */
+  body.dark-mode {
+    --bg: #0f1115;
+    --fg: #e7e9ee;
+    --card: #151a21;
+    --muted: #a7adbb;
+    --border: #2a313b;
+    --btn: #1c2330;
+  }
+
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-    margin: 20px; background:#f6f7fb; color:#222;
+    margin: 20px;
+    background: var(--bg);
+    color: var(--fg);
+    transition: background .2s ease, color .2s ease;
   }
   .wrap { max-width: 460px; margin: 0 auto; }
-  h1 { font-size: 32px; font-weight: 800; margin: 0 0 12px; }
+
+  h1 {
+    font-size: 32px; font-weight: 800; margin: 0 0 12px;
+    text-align: center;
+  }
 
   /* 剩餘金幣 */
   .balance {
-    background:#fff; border-radius:16px; padding:16px;
+    background: var(--card); border:1px solid var(--border); border-radius:16px; padding:16px;
     display:flex; align-items: center; justify-content:space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    will-change: transform, box-shadow;
   }
-.balance .label {
-  color:#444;
-  font-size: 22px;   /* 放大字體 */
-  font-weight: 600;  /* 加粗 */
-}
+  .balance .label {
+    color:#444; font-size: 22px; font-weight: 600;
+  }
+  body.dark-mode .balance .label { color: var(--fg); }
   .balance .value {
     font-size: 42px; font-weight: 900; letter-spacing:.5px; transition: color 0.2s ease;
   }
-  .balance.positive .value { color:#ffcc00; }
-  .balance.zero .value { color:#888; }
-  .balance.negative .value { color:#d33; }
+  .balance.positive .value { color: var(--gold); }
+  .balance.zero .value { color: var(--muted); }
+  .balance.negative .value { color: var(--danger); }
+
+  /* 贏/輸動畫（加在 .balance 上的 class） */
+  @keyframes flashGold {
+    0%   { box-shadow: 0 0 0 rgba(255,204,0,0); transform: translateY(0); }
+    10%  { box-shadow: 0 0 20px rgba(255,204,0,.6); }
+    100% { box-shadow: 0 0 0 rgba(255,204,0,0); transform: translateY(0); }
+  }
+  @keyframes slideRed {
+    0%   { box-shadow: 0 0 0 rgba(211,51,51,0); transform: translateY(-6px); }
+    20%  { box-shadow: 0 0 22px rgba(211,51,51,.55); }
+    100% { box-shadow: 0 0 0 rgba(211,51,51,0); transform: translateY(0); }
+  }
+  .flash-win { animation: flashGold .6s ease; }
+  .flash-lose { animation: slideRed .6s ease; }
 
   .topbar {
     display:flex; align-items:center; justify-content:space-between;
     margin: 12px 0 16px;
   }
   .mode-indicator { font-size:14px; color:#444; }
+  body.dark-mode .mode-indicator { color: var(--muted); }
   .mode-indicator strong { padding:4px 8px; border-radius:8px; font-size:15px; }
-  .mode-win strong { background:#e8f9ef; color:#0a7a3f; }
-  .mode-lose strong { background:#ffecec; color:#b11212; }
+  .mode-win strong { background:#e8f9ef; color:var(--plus); }
+  .mode-lose strong { background:#ffecec; color:var(--danger); }
 
-  /* 通用按鈕樣式 */
+  /* 通用按鈕樣式 + 主題切換 */
   .btn {
     display:inline-flex; align-items:center; justify-content:center;
-    border:none; background:#eef2f7;
+    border:none; background:var(--btn);
     padding:10px 14px; border-radius:12px; cursor:pointer;
-    font-weight:700; font-size:14px; color:#222;
-    transition:filter 0.2s ease;
+    font-weight:700; font-size:14px; color:var(--fg);
+    transition:filter 0.2s ease, background .2s ease, color .2s ease, border-color .2s ease;
   }
   .btn:hover { filter:brightness(.97); }
-  /* 灰底紅字（重設／刪除） */
-  .btn-danger { background:#eef2f7; color:#d33; }
+  .btn-danger { background:var(--btn); color: var(--danger); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); }
 
   .pad { display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
   .key {
-    background:#fff; border:1px solid #e5e7eb; border-radius:16px;
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
     padding:20px 0; font-size:26px; font-weight:800; text-align:center; cursor:pointer;
     user-select:none; box-shadow: 0 1px 4px rgba(0,0,0,.04);
-    transition: transform .02s ease-in;
+    transition: transform .02s ease-in, background .2s ease, border-color .2s ease, color .2s ease;
   }
   .key:active { transform: scale(.98); }
   .key.action-win { background:#eefdf2; border-color:#c8f1d6; }
   .key.action-lose { background:#fff1f1; border-color:#ffd3d3; }
+  body.dark-mode .key.action-win { background:#15331f; border-color:#194e2b; }
+  body.dark-mode .key.action-lose { background:#3a1b1b; border-color:#5e2a2a; }
 
   .section {
-    margin-top: 18px; background:#fff; border:1px solid #e5e7eb; border-radius:18px; padding:12px;
+    margin-top: 18px; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:12px;
     box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    transition: background .2s ease, border-color .2s ease;
   }
   .section h2 { font-size:18px; margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; }
 
@@ -78,72 +127,65 @@
   .amount-actions { display:flex; gap:8px; }
 
   .history { max-height: 320px; overflow:auto; }
-.row {
-  display: grid;
-  grid-template-columns: 30px 90px 1fr 90px 68px; /* 編號 | 時間 | 金額 | 餘 | 刪除 */
-  gap: 8px;
-  padding: 10px 0;
-  border-bottom: 1px dashed #eee;
-  font-size: 14px;
-  align-items: center;
-}
+  .row {
+    display: grid;
+    grid-template-columns: 30px 90px 1fr 90px 68px; /* 編號 | 時間 | 金額 | 餘 | 刪除 */
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+    align-items: center;
+  }
   .row:last-child { border-bottom:none; }
-  .amt.plus { color:#0a7a3f; font-weight:800; }
-  .amt.minus { color:#b11212; font-weight:800; }
-  .muted { color:#888; font-size:12px; }
+  .amt.plus { color: var(--plus); font-weight:800; }
+  .amt.minus { color: var(--minus); font-weight:800; }
+  .muted { color: var(--muted); font-size:12px; }
   .del-btn { padding:8px 10px; font-size:12px; border-radius:8px; }
 
   /* Modal (總結浮窗) + 淡入淡出 */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,.45);
     display:flex; align-items:center; justify-content:center; z-index: 9999;
-
-    /* 轉場：用透明度 + visibility 控制，避免 display 阻斷動畫 */
     opacity: 0; visibility: hidden; pointer-events: none;
     transition: opacity .18s ease, visibility .18s ease;
   }
-  .modal-backdrop.show {
-    opacity: 1; visibility: visible; pointer-events: auto;
-  }
+  .modal-backdrop.show { opacity: 1; visibility: visible; pointer-events: auto; }
   .modal {
-    width: min(86vw, 360px); /* 窄一點點 */
-    background:#fff; border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    width: min(86vw, 360px);
+    background: var(--card); border:1px solid var(--border); border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
     padding:16px 16px 14px; position: relative;
-
-    /* 面板本身的淡入（位移 + 透明） */
     transform: translateY(8px); opacity: 0;
-    transition: transform .18s ease, opacity .18s ease;
+    transition: transform .18s ease, opacity .18s ease, background .2s ease, border-color .2s ease;
   }
-  .modal-backdrop.show .modal {
-    transform: translateY(0); opacity: 1;
-  }
+  .modal-backdrop.show .modal { transform: translateY(0); opacity: 1; }
   .modal h3 { margin:0 0 10px; font-size:18px; font-weight:800; }
   .modal .close {
     position:absolute; right:10px; top:8px; border:none; background:transparent;
-    font-size:20px; line-height:1; cursor:pointer; color:#666;
+    font-size:20px; line-height:1; cursor:pointer; color: var(--muted);
   }
   .summary-grid {
     display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:6px;
   }
-  .summary-item { background:#f7f9fc; border:1px solid #eef2f7; border-radius:10px; padding:10px; }
-  .summary-item h4 { margin:0 0 6px; font-size:13px; color:#666; font-weight:700; }
+  .summary-item { background:rgba(0,0,0,.03); border:1px solid var(--border); border-radius:10px; padding:10px; }
+  body.dark-mode .summary-item { background: rgba(255,255,255,.03); }
+  .summary-item h4 { margin:0 0 6px; font-size:13px; color: var(--muted); font-weight:700; }
   .summary-item .val { font-size:18px; font-weight:900; }
-  .val.plus { color:#0a7a3f; }
-  .val.minus { color:#b11212; }
+  .val.plus { color: var(--plus); }
+  .val.minus { color: var(--minus); }
   .total-line {
-    margin-top:12px; padding-top:10px; border-top:1px dashed #e5e7eb;
+    margin-top:12px; padding-top:10px; border-top:1px dashed var(--border);
     display:flex; align-items:baseline; justify-content:space-between;
   }
-  .total-line .label { color:#666; }
+  .total-line .label { color: var(--muted); }
   .total-line .value { font-size:22px; font-weight:900; }
-  .total-line .value.positive { color:#ffcc00; }
-  .total-line .value.zero { color:#888; }
-  .total-line .value.negative { color:#d33; }
+  .total-line .value.positive { color: var(--gold); }
+  .total-line .value.zero { color: var(--muted); }
+  .total-line .value.negative { color: var(--danger); }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>   輸贏紀錄器 🀄️</h1>
+    <h1>輸贏紀錄器 🀄️</h1>
 
     <div class="balance" id="balanceBox" aria-live="polite">
       <div class="label">剩餘金額</div>
@@ -152,7 +194,10 @@
 
     <div class="topbar">
       <div class="mode-indicator" id="modeText">目前模式：<strong>未選擇</strong></div>
-      <button id="resetAll" class="btn btn-danger" title="清空金額與歷史">重設</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="themeToggle" class="btn btn-ghost" title="切換主題">🌙 暗色</button>
+        <button id="resetAll" class="btn btn-danger" title="清空金額與歷史">重設</button>
+      </div>
     </div>
 
     <div class="pad" id="pad">
@@ -235,6 +280,11 @@
   const backspaceBtn = $('#backspace');
   const clearInputBtn = $('#clearInput');
 
+  // 主題切換
+  const themeToggleBtn = $('#themeToggle');
+  const THEME_KEY = 'winloss_theme';
+  initTheme();
+
   // Summary modal elements
   const openSummaryBtn = $('#openSummary');
   const summaryBackdrop = $('#summaryBackdrop');
@@ -298,6 +348,7 @@
     else if (e.key.toLowerCase() === 'w') apply('win');
     else if (e.key.toLowerCase() === 'l') apply('lose');
     else if (e.key === 'Escape') closeSummary();
+    else if (e.key.toLowerCase() === 't') toggleTheme(); // 快捷鍵：t 切換主題
   });
 
   // --- Summary (總結) ---
@@ -338,8 +389,23 @@
     const amt = Number(state.buffer||'0'); if (!amt) return;
     state.history.unshift({ t: Date.now(), type, amount: amt });
     state.buffer = '0'; state.mode = type;
+
+    // 先重算與渲染
     recomputeBalanceAndAfter(); saveState(); renderAll();
+
+    // 觸發對應動畫在「剩餘金額」卡片上
+    triggerBalanceFlash(type);
   }
+  function triggerBalanceFlash(type) {
+    const cls = (type === 'win') ? 'flash-win' : 'flash-lose';
+    balanceBox.classList.remove('flash-win','flash-lose');
+    // 強制重排以重新觸發動畫
+    void balanceBox.offsetWidth;
+    balanceBox.classList.add(cls);
+    // 動畫結束清理（保險）
+    setTimeout(()=> balanceBox.classList.remove(cls), 700);
+  }
+
   function recomputeBalanceAndAfter() {
     let running = 0;
     for (let i = state.history.length-1; i>=0; i--) {
@@ -435,6 +501,24 @@
     } st.balance=running;
   }
   function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+
+  /* 主題初始化與切換 */
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark') document.body.classList.add('dark-mode');
+    updateThemeButton();
+    themeToggleBtn.addEventListener('click', toggleTheme);
+  }
+  function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    updateThemeButton();
+  }
+  function updateThemeButton() {
+    const isDark = document.body.classList.contains('dark-mode');
+    themeToggleBtn.textContent = isDark ? '☀️ 亮色' : '🌙 暗色';
+  }
 })();
 </script>
 </body>
