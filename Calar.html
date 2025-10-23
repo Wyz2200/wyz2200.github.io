@@ -73,12 +73,15 @@
   .amount-actions { display:flex; gap:8px; }
 
   .history { max-height: 320px; overflow:auto; }
-  .row {
-    display:grid;
-    grid-template-columns: 110px 1fr 120px 68px; /* 時間 | +/-金額 | 剩餘 | 刪除 */
-    gap:8px; padding:10px 0; border-bottom:1px dashed #eee;
-    font-size:14px; align-items:center;
-  }
+.row {
+  display: grid;
+  grid-template-columns: 30px 90px 1fr 90px 68px; /* 編號 | 時間 | 金額 | 餘 | 刪除 */
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #eee;
+  font-size: 14px;
+  align-items: center;
+}
   .row:last-child { border-bottom:none; }
   .amt.plus { color:#0a7a3f; font-weight:800; }
   .amt.minus { color:#b11212; font-weight:800; }
