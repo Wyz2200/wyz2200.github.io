@@ -21,10 +21,7 @@
   }
   .balance .label { color:#666; font-size:16px; }
   .balance .value {
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing:.5px;
-    transition: color 0.2s ease;
+    font-size: 42px; font-weight: 900; letter-spacing:.5px; transition: color 0.2s ease;
   }
   .balance.positive .value { color:#ffcc00; }
   .balance.zero .value { color:#888; }
@@ -48,7 +45,6 @@
     transition:filter 0.2s ease;
   }
   .btn:hover { filter:brightness(.97); }
-
   /* 灰底紅字（重設／刪除） */
   .btn-danger { background:#eef2f7; color:#d33; }
 
@@ -69,7 +65,12 @@
   }
   .section h2 { font-size:18px; margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; }
 
+  /* 本次金額 與 按鈕同一行 */
+  .amount-line {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
   #currentInput { font-size: 38px; font-weight: 900; }
+  .amount-actions { display:flex; gap:8px; }
 
   .history { max-height: 320px; overflow:auto; }
   .row {
@@ -84,15 +85,29 @@
   .muted { color:#888; font-size:12px; }
   .del-btn { padding:8px 10px; font-size:12px; border-radius:8px; }
 
-  /* Modal (總結浮窗) */
+  /* Modal (總結浮窗) + 淡入淡出 */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,.45);
-    display:none; align-items:center; justify-content:center; z-index: 9999;
+    display:flex; align-items:center; justify-content:center; z-index: 9999;
+
+    /* 轉場：用透明度 + visibility 控制，避免 display 阻斷動畫 */
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
+  }
+  .modal-backdrop.show {
+    opacity: 1; visibility: visible; pointer-events: auto;
   }
   .modal {
-    width: min(92vw, 420px);
+    width: min(86vw, 360px); /* 窄一點點 */
     background:#fff; border-radius:14px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
     padding:16px 16px 14px; position: relative;
+
+    /* 面板本身的淡入（位移 + 透明） */
+    transform: translateY(8px); opacity: 0;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .modal-backdrop.show .modal {
+    transform: translateY(0); opacity: 1;
   }
   .modal h3 { margin:0 0 10px; font-size:18px; font-weight:800; }
   .modal .close {
@@ -102,9 +117,7 @@
   .summary-grid {
     display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:6px;
   }
-  .summary-item {
-    background:#f7f9fc; border:1px solid #eef2f7; border-radius:10px; padding:10px;
-  }
+  .summary-item { background:#f7f9fc; border:1px solid #eef2f7; border-radius:10px; padding:10px; }
   .summary-item h4 { margin:0 0 6px; font-size:13px; color:#666; font-weight:700; }
   .summary-item .val { font-size:18px; font-weight:900; }
   .val.plus { color:#0a7a3f; }
@@ -151,10 +164,12 @@
 
     <div class="section">
       <h2>本次金額：</h2>
-      <div id="currentInput">0</div>
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
-        <button id="backspace" class="btn">退格</button>
-        <button id="clearInput" class="btn">清零</button>
+      <div class="amount-line">
+        <div id="currentInput">0</div>
+        <div class="amount-actions">
+          <button id="backspace" class="btn">退格</button>
+          <button id="clearInput" class="btn">清零</button>
+        </div>
       </div>
     </div>
 
@@ -296,7 +311,6 @@
 
   // --- Summary (總結) ---
   openSummaryBtn.addEventListener('click', () => {
-    // 統計
     const { winCount, loseCount, winAmount, loseAmount, total } = computeSummary();
     sumWinCountEl.textContent = formatNumber(winCount);
     sumLoseCountEl.textContent = formatNumber(loseCount);
@@ -309,9 +323,7 @@
     else if (total < 0) sumTotalValueEl.classList.add('negative');
     else sumTotalValueEl.classList.add('zero');
 
-    // 顯示浮窗
-    summaryBackdrop.style.display = 'flex';
-    summaryBackdrop.setAttribute('aria-hidden', 'false');
+    openSummary();
   });
 
   summaryClose.addEventListener('click', closeSummary);
@@ -319,8 +331,12 @@
     if (e.target === summaryBackdrop) closeSummary();
   });
 
+  function openSummary() {
+    summaryBackdrop.classList.add('show');
+    summaryBackdrop.setAttribute('aria-hidden', 'false');
+  }
   function closeSummary() {
-    summaryBackdrop.style.display = 'none';
+    summaryBackdrop.classList.remove('show');
     summaryBackdrop.setAttribute('aria-hidden', 'true');
   }
 
@@ -328,11 +344,9 @@
     let winCount = 0, loseCount = 0, winAmount = 0, loseAmount = 0;
     for (const rec of state.history) {
       if (rec.type === 'win') {
-        winCount++;
-        winAmount += Number(rec.amount) || 0;
+        winCount++; winAmount += Number(rec.amount) || 0;
       } else if (rec.type === 'lose') {
-        loseCount++;
-        loseAmount += Number(rec.amount) || 0;
+        loseCount++; loseAmount += Number(rec.amount) || 0;
       }
     }
     const total = (winAmount - loseAmount);
@@ -345,40 +359,26 @@
     else state.buffer += d;
     saveState(); renderInput();
   }
-
   function setMode(m) {
-    state.mode = m;
-    saveState(); renderMode();
+    state.mode = m; saveState(); renderMode();
   }
-
   function apply(type) {
     const amt = Number(state.buffer || '0');
     if (!amt) return;
     state.history.unshift({ t: Date.now(), type, amount: amt });
-    state.buffer = '0';
-    state.mode = type;
-    recomputeBalanceAndAfter();
-    saveState(); renderAll();
+    state.buffer = '0'; state.mode = type;
+    recomputeBalanceAndAfter(); saveState(); renderAll();
   }
-
   function recomputeBalanceAndAfter() {
     let running = 0;
     for (let i = state.history.length - 1; i >= 0; i--) {
       const rec = state.history[i];
       const delta = rec.type === 'win' ? rec.amount : -rec.amount;
-      running += delta;
-      rec.after = running;
+      running += delta; rec.after = running;
     }
     state.balance = running;
   }
-
-  function renderAll() {
-    renderBalance();
-    renderMode();
-    renderInput();
-    renderHistory();
-  }
-
+  function renderAll() { renderBalance(); renderMode(); renderInput(); renderHistory(); }
   function renderBalance() {
     balanceEl.textContent = formatNumber(state.balance);
     balanceBox.classList.remove('positive','zero','negative');
@@ -386,35 +386,26 @@
     else if (state.balance < 0) balanceBox.classList.add('negative');
     else balanceBox.classList.add('zero');
   }
-
   function renderMode() {
     if (state.mode === 'win') {
-      modeText.classList.add('mode-win');
-      modeText.classList.remove('mode-lose');
+      modeText.classList.add('mode-win'); modeText.classList.remove('mode-lose');
       modeText.innerHTML = '目前模式：<strong>贏（加）</strong>';
     } else if (state.mode === 'lose') {
-      modeText.classList.add('mode-lose');
-      modeText.classList.remove('mode-win');
+      modeText.classList.add('mode-lose'); modeText.classList.remove('mode-win');
       modeText.innerHTML = '目前模式：<strong>輸（減）</strong>';
     } else {
       modeText.classList.remove('mode-win', 'mode-lose');
       modeText.innerHTML = '目前模式：<strong>未選擇</strong>';
     }
   }
-
-  function renderInput() {
-    currentInputEl.textContent = formatNumber(Number(state.buffer || 0));
-  }
-
+  function renderInput() { currentInputEl.textContent = formatNumber(Number(state.buffer || 0)); }
   function renderHistory() {
     historyEl.innerHTML = '';
     if (!state.history.length) {
-      historyEl.innerHTML = '<div class="muted">目前尚無紀錄</div>';
-      return;
+      historyEl.innerHTML = '<div class="muted">目前尚無紀錄</div>'; return;
     }
     state.history.forEach((rec, idx) => {
-      const row = document.createElement('div');
-      row.className = 'row';
+      const row = document.createElement('div'); row.className = 'row';
       const date = new Date(rec.t);
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth()+1).padStart(2,'0');
@@ -438,17 +429,11 @@
       delCol.style.textAlign = 'right';
       delCol.innerHTML = `<button class="btn del-btn btn-danger" data-del-index="${idx}">刪除</button>`;
 
-      row.appendChild(timeCol);
-      row.appendChild(typeCol);
-      row.appendChild(afterCol);
-      row.appendChild(delCol);
+      row.appendChild(timeCol); row.appendChild(typeCol); row.appendChild(afterCol); row.appendChild(delCol);
       historyEl.appendChild(row);
     });
   }
-
-  function formatNumber(n) {
-    return Number(n).toLocaleString('zh-Hant-TW');
-  }
+  function formatNumber(n) { return Number(n).toLocaleString('zh-Hant-TW'); }
 
   function loadState() {
     try {
@@ -461,27 +446,19 @@
         mode: (s.mode === 'win' || s.mode === 'lose') ? s.mode : null,
         history: Array.isArray(s.history) ? s.history : []
       };
-      recomputeBalanceAndAfterFrom(st);
-      return st;
-    } catch {
-      return { balance: 0, buffer: '0', mode: null, history: [] };
-    }
+      recomputeBalanceAndAfterFrom(st); return st;
+    } catch { return { balance: 0, buffer: '0', mode: null, history: [] }; }
   }
-
   function recomputeBalanceAndAfterFrom(st) {
     let running = 0;
     for (let i = st.history.length - 1; i >= 0; i--) {
       const rec = st.history[i];
       const delta = rec.type === 'win' ? rec.amount : -rec.amount;
-      running += delta;
-      rec.after = running;
+      running += delta; rec.after = running;
     }
     st.balance = running;
   }
-
-  function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 })();
 </script>
 </body>
