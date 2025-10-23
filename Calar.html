@@ -10,39 +10,47 @@
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
     margin: 20px; background:#f6f7fb; color:#222;
   }
-  .wrap { max-width: 420px; margin: 0 auto; }
-  h1 { font-size: 20px; font-weight: 700; margin: 0 0 12px; }
+  .wrap { max-width: 460px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 800; margin: 0 0 12px; }
 
-  /* 剩餘金幣：放大 + 黃色 */
+  /* 剩餘金幣 */
   .balance {
     background:#fff; border-radius:12px; padding:16px;
     display:flex; align-items:baseline; justify-content:space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,.05);
   }
-  .balance .label { color:#666; font-size:15px; }
+  .balance .label { color:#666; font-size:16px; }
   .balance .value {
-    font-size: 40px;            /* 放大 */
+    font-size: 42px;
     font-weight: 900;
     letter-spacing:.5px;
-    color: #ffcc00;             /* 黃色 */
+    transition: color 0.2s ease;
   }
+  .balance.positive .value { color:#ffcc00; }   /* 黃色 */
+  .balance.zero .value { color:#888; }          /* 灰色 */
+  .balance.negative .value { color:#d33; }      /* 紅色 */
 
-  /* 只有重設按鈕保留 */
-  .toolbar-top { display:flex; justify-content:flex-end; margin: 10px 0 16px; }
-  .toolbar-top button {
-    border:none; background:#f0f3f7; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin: 12px 0 16px;
   }
-  .toolbar-top button:hover { filter:brightness(.97); }
-
-  .mode-indicator { margin: 6px 0 8px; font-size:12px; color:#666; }
-  .mode-indicator strong { padding:2px 6px; border-radius:6px; }
+  .mode-indicator { font-size:14px; color:#444; }
+  .mode-indicator strong { padding:4px 8px; border-radius:8px; font-size:15px; }
   .mode-win strong { background:#e8f9ef; color:#0a7a3f; }
   .mode-lose strong { background:#ffecec; color:#b11212; }
+
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    border:none; background:#eef2f7; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;
+    font-size:14px;
+  }
+  .btn:hover { filter:brightness(.97); }
+  .btn-danger { background:#ffe8e8; }
 
   .pad { display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
   .key {
     background:#fff; border:1px solid #e5e7eb; border-radius:12px;
-    padding:18px 0; font-size:24px; font-weight:800; text-align:center; cursor:pointer;
+    padding:20px 0; font-size:26px; font-weight:800; text-align:center; cursor:pointer;
     user-select:none; box-shadow: 0 1px 4px rgba(0,0,0,.04);
     transition: transform .02s ease-in;
   }
@@ -56,27 +64,23 @@
   }
   .section h2 { font-size:18px; margin:0 0 8px; }
 
-  /* 本次金額：放大顯示 */
   #currentInput {
-    font-size: 36px;            /* 放大 */
+    font-size: 38px;
     font-weight: 900;
   }
 
-  .history { max-height: 300px; overflow:auto; }
+  .history { max-height: 320px; overflow:auto; }
   .row {
-    display:grid; grid-template-columns: 92px 1fr 120px; gap:8px; padding:8px 0; border-bottom:1px dashed #eee;
+    display:grid;
+    grid-template-columns: 110px 1fr 120px 68px;
+    gap:8px; padding:10px 0; border-bottom:1px dashed #eee;
     font-size:14px; align-items:center;
   }
   .row:last-child { border-bottom:none; }
   .amt.plus { color:#0a7a3f; font-weight:800; }
   .amt.minus { color:#b11212; font-weight:800; }
   .muted { color:#888; font-size:12px; }
-
-  .toolbar { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
-  .toolbar button {
-    border:none; background:#f0f3f7; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12px;
-  }
-  .toolbar button:hover { filter: brightness(0.97); }
+  .del-btn { padding:8px 10px; font-size:12px; border-radius:8px; }
 </style>
 </head>
 <body>
@@ -88,26 +92,21 @@
       <div class="value" id="balance">0</div>
     </div>
 
-    <div class="toolbar-top">
-      <button id="resetAll" title="清空金額與歷史">重設</button>
+    <div class="topbar">
+      <div class="mode-indicator" id="modeText">目前模式：<strong>未選擇</strong></div>
+      <button id="resetAll" class="btn btn-danger" title="清空金額與歷史">重設</button>
     </div>
 
-    <div class="mode-indicator" id="modeText">目前模式：<strong>未選擇</strong></div>
-
     <div class="pad" id="pad">
-      <!-- 1 2 3 -->
       <div class="key" data-key="1">1</div>
       <div class="key" data-key="2">2</div>
       <div class="key" data-key="3">3</div>
-      <!-- 4 5 6 -->
       <div class="key" data-key="4">4</div>
       <div class="key" data-key="5">5</div>
       <div class="key" data-key="6">6</div>
-      <!-- 7 8 9 -->
       <div class="key" data-key="7">7</div>
       <div class="key" data-key="8">8</div>
       <div class="key" data-key="9">9</div>
-      <!-- 贏 0 輸 -->
       <div class="key action-win" data-action="win">贏</div>
       <div class="key" data-key="0">0</div>
       <div class="key action-lose" data-action="lose">輸</div>
@@ -116,9 +115,9 @@
     <div class="section">
       <h2>本次金額：</h2>
       <div id="currentInput">0</div>
-      <div class="toolbar">
-        <button id="backspace">退格</button>
-        <button id="clearInput">清零</button>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button id="backspace" class="btn">退格</button>
+        <button id="clearInput" class="btn">清零</button>
       </div>
     </div>
 
@@ -133,6 +132,7 @@
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
 
+  const balanceBox = $('#balanceBox');
   const balanceEl = $('#balance');
   const modeText = $('#modeText');
   const currentInputEl = $('#currentInput');
@@ -144,10 +144,6 @@
 
   const STORAGE_KEY = 'winloss_recorder_v1';
   let state = loadState();
-
-  /** state:
-   * { balance: number, buffer: string, mode: 'win'|'lose'|null, history: Array<{t:number, type:'win'|'lose', amount:number, after:number}> }
-   */
 
   renderAll();
 
@@ -188,7 +184,18 @@
     saveState(); renderInput();
   });
 
-  // --- keyboard (optional) ---
+  // --- delete record ---
+  historyEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-del-index]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.delIndex);
+    if (Number.isNaN(idx)) return;
+    state.history.splice(idx, 1);
+    recomputeBalanceAndAfter();
+    saveState(); renderAll();
+  });
+
+  // --- keyboard support ---
   window.addEventListener('keydown', (e) => {
     if (e.key >= '0' && e.key <= '9') {
       appendDigit(e.key);
@@ -221,19 +228,23 @@
     const amt = Number(state.buffer || '0');
     if (!amt) return;
 
-    const delta = (type === 'win') ? amt : -amt;
-    state.balance += delta;
-
-    state.history.unshift({
-      t: Date.now(),
-      type,
-      amount: amt,
-      after: state.balance
-    });
-
+    state.history.unshift({ t: Date.now(), type, amount: amt });
     state.buffer = '0';
     state.mode = type;
+
+    recomputeBalanceAndAfter();
     saveState(); renderAll();
+  }
+
+  function recomputeBalanceAndAfter() {
+    let running = 0;
+    for (let i = state.history.length - 1; i >= 0; i--) {
+      const rec = state.history[i];
+      const delta = rec.type === 'win' ? rec.amount : -rec.amount;
+      running += delta;
+      rec.after = running;
+    }
+    state.balance = running;
   }
 
   function renderAll() {
@@ -245,6 +256,10 @@
 
   function renderBalance() {
     balanceEl.textContent = formatNumber(state.balance);
+    balanceBox.classList.remove('positive','zero','negative');
+    if (state.balance > 0) balanceBox.classList.add('positive');
+    else if (state.balance < 0) balanceBox.classList.add('negative');
+    else balanceBox.classList.add('zero');
   }
 
   function renderMode() {
@@ -272,7 +287,7 @@
       historyEl.innerHTML = '<div class="muted">目前尚無紀錄</div>';
       return;
     }
-    state.history.forEach(rec => {
+    state.history.forEach((rec, idx) => {
       const row = document.createElement('div');
       row.className = 'row';
       const date = new Date(rec.t);
@@ -292,11 +307,16 @@
       typeCol.innerHTML = `<span class="amt ${rec.type==='win'?'plus':'minus'}">${sign}${formatNumber(rec.amount)}</span>`;
 
       const afterCol = document.createElement('div');
-      afterCol.innerHTML = `<span class="muted">剩餘：${formatNumber(rec.after)}</span>`;
+      afterCol.innerHTML = `<span class="muted">剩餘：${formatNumber(rec.after ?? 0)}</span>`;
+
+      const delCol = document.createElement('div');
+      delCol.style.textAlign = 'right';
+      delCol.innerHTML = `<button class="btn del-btn btn-danger" data-del-index="${idx}">刪除</button>`;
 
       row.appendChild(timeCol);
       row.appendChild(typeCol);
       row.appendChild(afterCol);
+      row.appendChild(delCol);
       historyEl.appendChild(row);
     });
   }
@@ -308,17 +328,32 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { balance: 0, buffer: '0', mode: null, history: [] };
+      if (!raw) {
+        return { balance: 0, buffer: '0', mode: null, history: [] };
+      }
       const s = JSON.parse(raw);
-      return {
+      const st = {
         balance: Number(s.balance) || 0,
         buffer: typeof s.buffer === 'string' ? s.buffer : '0',
         mode: (s.mode === 'win' || s.mode === 'lose') ? s.mode : null,
         history: Array.isArray(s.history) ? s.history : []
       };
+      recomputeBalanceAndAfterFrom(st);
+      return st;
     } catch {
       return { balance: 0, buffer: '0', mode: null, history: [] };
     }
+  }
+
+  function recomputeBalanceAndAfterFrom(st) {
+    let running = 0;
+    for (let i = st.history.length - 1; i >= 0; i--) {
+      const rec = st.history[i];
+      const delta = rec.type === 'win' ? rec.amount : -rec.amount;
+      running += delta;
+      rec.after = running;
+    }
+    st.balance = running;
   }
 
   function saveState() {
