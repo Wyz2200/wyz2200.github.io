@@ -76,7 +76,12 @@
   }
   .flash-win { animation: flashGold .6s ease; }
   .flash-lose { animation: slideRed .6s ease; }
-
+.divider{
+  height:1px;
+  background: var(--border);
+  margin: 8px 0;      /* 上下不要太空，8px剛好 */
+  border: 0;
+}
   .topbar {
     display:flex; align-items:center; justify-content:space-between;
     margin: 12px 0 16px;
@@ -185,7 +190,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>⠀ 輸贏紀錄器 🀄️</h1>
+    <h1>⠀輸贏紀錄器 🀄️</h1>
 
     <div class="balance" id="balanceBox" aria-live="polite">
       <div class="label">剩餘金額</div>
@@ -199,7 +204,18 @@
         <button id="resetAll" class="btn btn-danger" title="清空金額與歷史">重設</button>
       </div>
     </div>
-
+    
+    <div class="section">
+      <h2>本次金額：</h2>
+      <div class="amount-line">
+        <div id="currentInput">0</div>
+        <div class="amount-actions">
+          <button id="backspace" class="btn">退格</button>
+          <button id="clearInput" class="btn">清零</button>
+        </div>
+      </div>
+    </div>
+    
     <div class="pad" id="pad">
       <div class="key" data-key="1">1</div>
       <div class="key" data-key="2">2</div>
@@ -213,17 +229,6 @@
       <div class="key action-win" data-action="win">贏</div>
       <div class="key" data-key="0">0</div>
       <div class="key action-lose" data-action="lose">輸</div>
-    </div>
-
-    <div class="section">
-      <h2>本次金額：</h2>
-      <div class="amount-line">
-        <div id="currentInput">0</div>
-        <div class="amount-actions">
-          <button id="backspace" class="btn">退格</button>
-          <button id="clearInput" class="btn">清零</button>
-        </div>
-      </div>
     </div>
 
     <div class="section">
