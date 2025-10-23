@@ -359,6 +359,15 @@
   }
   function renderInput(){ currentInputEl.textContent = formatNumber(Number(state.buffer||0)); }
 
+  // 短版時間字串：MM/DD HH:MM
+  function formatTimeShort(d){
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${mm}/${dd} ${hh}:${mi}`;
+  }
+
   function renderHistory(){
     historyEl.innerHTML='';
     if(!state.history.length){ historyEl.innerHTML='<div class="muted">目前尚無紀錄</div>'; return; }
@@ -367,22 +376,31 @@
     state.history.forEach((rec,idx)=>{
       const row=document.createElement('div');
       row.className='row';
+
+      // 編號（由下往上：最底=1，最上=max）
       const numberCol=document.createElement('div');
+      numberCol.className='num';
       numberCol.textContent = (totalRecords-idx).toString() + '.';
-      numberCol.style.textAlign='right';
+
+      // 時間（短版）
       const date=new Date(rec.t);
-      const timeStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
       const timeCol=document.createElement('div');
-      timeCol.innerHTML=`<span class="muted">${timeStr}</span>`;
+      timeCol.innerHTML=`<span class="muted">${formatTimeShort(date)}</span>`;
+
+      // 贏/輸金額
       const typeCol=document.createElement('div');
       const sign=rec.type==='win'?'+':'-';
       typeCol.innerHTML=`<span class="amt ${rec.type==='win'?'plus':'minus'}">${sign}${formatNumber(rec.amount)}</span>`;
+
+      // 剩餘（縮成「餘：」）
       const afterCol=document.createElement('div');
-      afterCol.innerHTML=`<span class="muted">剩餘：${formatNumber(rec.after??0)}</span>`;
+      afterCol.innerHTML=`<span class="muted">餘：${formatNumber(rec.after??0)}</span>`;
+
+      // 刪除
       const delCol=document.createElement('div');
       delCol.style.textAlign='right';
       delCol.innerHTML=`<button class="btn del-btn btn-danger" data-del-index="${idx}">刪除</button>`;
-      row.style.gridTemplateColumns='30px 110px 1fr 120px 68px';
+
       row.append(numberCol,timeCol,typeCol,afterCol,delCol);
       historyEl.appendChild(row);
     });
