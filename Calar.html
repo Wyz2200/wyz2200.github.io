@@ -26,9 +26,9 @@
     letter-spacing:.5px;
     transition: color 0.2s ease;
   }
-  .balance.positive .value { color:#ffcc00; }   /* 黃色 */
-  .balance.zero .value { color:#888; }          /* 灰色 */
-  .balance.negative .value { color:#d33; }      /* 紅色 */
+  .balance.positive .value { color:#ffcc00; }
+  .balance.zero .value { color:#888; }
+  .balance.negative .value { color:#d33; }
 
   .topbar {
     display:flex; align-items:center; justify-content:space-between;
@@ -39,13 +39,18 @@
   .mode-win strong { background:#e8f9ef; color:#0a7a3f; }
   .mode-lose strong { background:#ffecec; color:#b11212; }
 
+  /* 通用按鈕樣式 */
   .btn {
     display:inline-flex; align-items:center; justify-content:center;
-    border:none; background:#eef2f7; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;
-    font-size:14px;
+    border:none; background:#eef2f7;
+    padding:10px 14px; border-radius:12px; cursor:pointer;
+    font-weight:700; font-size:14px; color:#222;
+    transition:filter 0.2s ease;
   }
   .btn:hover { filter:brightness(.97); }
-  .btn-danger { background:#ffe8e8; }
+
+  /* 灰底紅字（重設／刪除） */
+  .btn-danger { background:#eef2f7; color:#d33; }
 
   .pad { display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
   .key {
@@ -62,17 +67,14 @@
     margin-top: 18px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px;
     box-shadow: 0 2px 8px rgba(0,0,0,.04);
   }
-  .section h2 { font-size:18px; margin:0 0 8px; }
+  .section h2 { font-size:18px; margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; }
 
-  #currentInput {
-    font-size: 38px;
-    font-weight: 900;
-  }
+  #currentInput { font-size: 38px; font-weight: 900; }
 
   .history { max-height: 320px; overflow:auto; }
   .row {
     display:grid;
-    grid-template-columns: 110px 1fr 120px 68px;
+    grid-template-columns: 110px 1fr 120px 68px; /* 時間 | +/-金額 | 剩餘 | 刪除 */
     gap:8px; padding:10px 0; border-bottom:1px dashed #eee;
     font-size:14px; align-items:center;
   }
@@ -81,6 +83,41 @@
   .amt.minus { color:#b11212; font-weight:800; }
   .muted { color:#888; font-size:12px; }
   .del-btn { padding:8px 10px; font-size:12px; border-radius:8px; }
+
+  /* Modal (總結浮窗) */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display:none; align-items:center; justify-content:center; z-index: 9999;
+  }
+  .modal {
+    width: min(92vw, 420px);
+    background:#fff; border-radius:14px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    padding:16px 16px 14px; position: relative;
+  }
+  .modal h3 { margin:0 0 10px; font-size:18px; font-weight:800; }
+  .modal .close {
+    position:absolute; right:10px; top:8px; border:none; background:transparent;
+    font-size:20px; line-height:1; cursor:pointer; color:#666;
+  }
+  .summary-grid {
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:6px;
+  }
+  .summary-item {
+    background:#f7f9fc; border:1px solid #eef2f7; border-radius:10px; padding:10px;
+  }
+  .summary-item h4 { margin:0 0 6px; font-size:13px; color:#666; font-weight:700; }
+  .summary-item .val { font-size:18px; font-weight:900; }
+  .val.plus { color:#0a7a3f; }
+  .val.minus { color:#b11212; }
+  .total-line {
+    margin-top:12px; padding-top:10px; border-top:1px dashed #e5e7eb;
+    display:flex; align-items:baseline; justify-content:space-between;
+  }
+  .total-line .label { color:#666; }
+  .total-line .value { font-size:22px; font-weight:900; }
+  .total-line .value.positive { color:#ffcc00; }
+  .total-line .value.zero { color:#888; }
+  .total-line .value.negative { color:#d33; }
 </style>
 </head>
 <body>
@@ -122,8 +159,41 @@
     </div>
 
     <div class="section">
-      <h2>紀錄</h2>
+      <h2>
+        <span>紀錄</span>
+        <button id="openSummary" class="btn" title="查看贏/輸次數與金額">總結</button>
+      </h2>
       <div class="history" id="history"></div>
+    </div>
+  </div>
+
+  <!-- 總結浮窗 -->
+  <div class="modal-backdrop" id="summaryBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+      <button class="close" id="summaryClose" aria-label="關閉">×</button>
+      <h3 id="summaryTitle">總結</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <h4>贏的次數</h4>
+          <div class="val" id="sumWinCount">0</div>
+        </div>
+        <div class="summary-item">
+          <h4>輸的次數</h4>
+          <div class="val" id="sumLoseCount">0</div>
+        </div>
+        <div class="summary-item">
+          <h4>贏過的金額</h4>
+          <div class="val plus" id="sumWinAmount">+0</div>
+        </div>
+        <div class="summary-item">
+          <h4>輸過的金額</h4>
+          <div class="val minus" id="sumLoseAmount">-0</div>
+        </div>
+      </div>
+      <div class="total-line">
+        <div class="label">總金額</div>
+        <div class="value" id="sumTotalValue">0</div>
+      </div>
     </div>
   </div>
 
@@ -141,6 +211,16 @@
   const resetAllBtn = $('#resetAll');
   const backspaceBtn = $('#backspace');
   const clearInputBtn = $('#clearInput');
+
+  // Summary modal elements
+  const openSummaryBtn = $('#openSummary');
+  const summaryBackdrop = $('#summaryBackdrop');
+  const summaryClose = $('#summaryClose');
+  const sumWinCountEl = $('#sumWinCount');
+  const sumLoseCountEl = $('#sumLoseCount');
+  const sumWinAmountEl = $('#sumWinAmount');
+  const sumLoseAmountEl = $('#sumLoseAmount');
+  const sumTotalValueEl = $('#sumTotalValue');
 
   const STORAGE_KEY = 'winloss_recorder_v1';
   let state = loadState();
@@ -209,8 +289,55 @@
       apply('win');
     } else if (e.key.toLowerCase() === 'l') {
       apply('lose');
+    } else if (e.key === 'Escape') {
+      closeSummary();
     }
   });
+
+  // --- Summary (總結) ---
+  openSummaryBtn.addEventListener('click', () => {
+    // 統計
+    const { winCount, loseCount, winAmount, loseAmount, total } = computeSummary();
+    sumWinCountEl.textContent = formatNumber(winCount);
+    sumLoseCountEl.textContent = formatNumber(loseCount);
+    sumWinAmountEl.textContent = '+' + formatNumber(winAmount);
+    sumLoseAmountEl.textContent = '-' + formatNumber(loseAmount);
+
+    sumTotalValueEl.textContent = formatNumber(total);
+    sumTotalValueEl.classList.remove('positive','negative','zero');
+    if (total > 0) sumTotalValueEl.classList.add('positive');
+    else if (total < 0) sumTotalValueEl.classList.add('negative');
+    else sumTotalValueEl.classList.add('zero');
+
+    // 顯示浮窗
+    summaryBackdrop.style.display = 'flex';
+    summaryBackdrop.setAttribute('aria-hidden', 'false');
+  });
+
+  summaryClose.addEventListener('click', closeSummary);
+  summaryBackdrop.addEventListener('click', (e) => {
+    if (e.target === summaryBackdrop) closeSummary();
+  });
+
+  function closeSummary() {
+    summaryBackdrop.style.display = 'none';
+    summaryBackdrop.setAttribute('aria-hidden', 'true');
+  }
+
+  function computeSummary() {
+    let winCount = 0, loseCount = 0, winAmount = 0, loseAmount = 0;
+    for (const rec of state.history) {
+      if (rec.type === 'win') {
+        winCount++;
+        winAmount += Number(rec.amount) || 0;
+      } else if (rec.type === 'lose') {
+        loseCount++;
+        loseAmount += Number(rec.amount) || 0;
+      }
+    }
+    const total = (winAmount - loseAmount);
+    return { winCount, loseCount, winAmount, loseAmount, total };
+  }
 
   // --- helpers ---
   function appendDigit(d) {
@@ -227,11 +354,9 @@
   function apply(type) {
     const amt = Number(state.buffer || '0');
     if (!amt) return;
-
     state.history.unshift({ t: Date.now(), type, amount: amt });
     state.buffer = '0';
     state.mode = type;
-
     recomputeBalanceAndAfter();
     saveState(); renderAll();
   }
@@ -328,9 +453,7 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        return { balance: 0, buffer: '0', mode: null, history: [] };
-      }
+      if (!raw) return { balance: 0, buffer: '0', mode: null, history: [] };
       const s = JSON.parse(raw);
       const st = {
         balance: Number(s.balance) || 0,
