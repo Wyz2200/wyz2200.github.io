@@ -134,7 +134,7 @@
 
 /* 只有「紀錄」那一塊（wrap 裡最後一個 .section）改成只保留下方兩個圓角 */
 .wrap > .section:last-of-type {
-  border-radius: 18px 18px 38px 38px;
+  border-radius: 18px 18px 42px 42px;
 }
 
 .section h2 {
@@ -153,6 +153,10 @@
   .amount-actions { display:flex; gap:8px; }
 
   .history { max-height: 320px; overflow:auto; }
+  /* 讓紀錄整體區塊預設高一點 */
+.section:last-of-type {
+  min-height: 220px; /* 原本大概 140~160，這樣會明顯高一點 */
+}
   .row {
     display: grid;
     grid-template-columns: 30px 90px 1fr 90px 68px; /* 編號 | 時間 | 金額 | 餘 | 刪除 */
