@@ -122,13 +122,15 @@
   body.dark-mode .key.action-lose { background:#3a1b1b; border-color:#5e2a2a; }
 
   .section {
+    /* wrap 裡最後一個 .section 就是「紀錄」那塊 */
+.wrap > .section:last-of-type {
+  border-radius: 18px 18px 28px 28px;  /* 只留下面兩角 */
+}
+
     margin-top: 18px; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:12px;
     box-shadow: 0 2px 8px rgba(0,0,0,.04);
     transition: background .2s ease, border-color .2s ease;
   }
-  .section:nth-of-type(2) {
-  border-radius: 18px 18px 28px 28px;
-}
   .section h2 { font-size:18px; margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; }
 
   /* 本次金額 與 按鈕同一行 */
