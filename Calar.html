@@ -121,11 +121,22 @@
   body.dark-mode .key.action-win { background:#15331f; border-color:#194e2b; }
   body.dark-mode .key.action-lose { background:#3a1b1b; border-color:#5e2a2a; }
 
-  .section {
-    /* wrap 裡最後一個 .section 就是「紀錄」那塊 */
-.wrap > .section:last-of-type {
-  border-radius: 18px 18px 28px 28px;  /* 只留下面兩角 */
+/* 基本的 .section 外觀 */
+.section {
+  margin-top: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  transition: background .2s ease, border-color .2s ease;
 }
+
+/* 只有「紀錄」那一塊（wrap 裡最後一個 .section）改成只保留下方兩個圓角 */
+.wrap > .section:last-of-type {
+  border-radius: 18px 18px 28px 28px;  /* 上左0 上右0 下右28 下左28 */
+}
+
 
     margin-top: 18px; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:12px;
     box-shadow: 0 2px 8px rgba(0,0,0,.04);
