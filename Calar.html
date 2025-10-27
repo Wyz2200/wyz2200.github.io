@@ -203,7 +203,7 @@
     background: var(--card);
     border-top-left-radius: 16px; border-top-right-radius: 16px;
     border: 1px solid var(--border);
-    padding: 14px;
+padding: 14px 14px calc(20px + env(safe-area-inset-bottom));
     transform: translateY(100%);
     transition: transform .18s ease, background .2s ease, border-color .2s ease;
   }
@@ -211,11 +211,21 @@
   .sheet header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .sheet header .title { font-weight: 800; }
   .sheet .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-  .swatch-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 2px solid var(--border);
-    background: #eee; cursor: pointer;
-  }
+.swatch-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--btn); /* 外底灰色 */
+  border: 2px solid var(--border);
+  cursor: pointer;
+  position: relative;
+}
+.swatch-btn::after {
+  content: "";
+  position: absolute;
+  inset: 6px;              /* 讓中間留出灰邊 */
+  border-radius: 50%;
+  background: var(--swatch-color, #fff);  /* 用 JS 寫入主色 */
+}
   .swatch-btn:focus { outline: none; box-shadow: 0 0 0 2px rgba(0,0,0,.08) inset; }
   .swatch-btn.active { box-shadow: 0 0 0 3px rgba(0,0,0,.15); }
   body.dark-mode .sheet-backdrop { background: rgba(0,0,0,.45); }
@@ -544,19 +554,23 @@
   const BG_KEY = 'winloss_bg_color';
 
   // 預設色票（含亮/暗）
-  const PRESETS = [
-    { name:'Default',  color:'#f6f7fb', dark:false },
-    { name:'Warm',     color:'#fffdf5', dark:false },
-    { name:'Mint',     color:'#f5fff8', dark:false },
-    { name:'Sky',      color:'#f5f8ff', dark:false },
-    { name:'Blush',    color:'#fff5f7', dark:false },
-    { name:'Olive',    color:'#f7fff5', dark:false },
+const PRESETS = [
+  // 亮色系
+  { name:'Default',  color:'#f6f7fb', dark:false },
+  { name:'Warm',     color:'#fff7e8', dark:false },
+  { name:'Mint',     color:'#eafff2', dark:false },
+  { name:'Sky',      color:'#eaf5ff', dark:false },
+  { name:'Blush',    color:'#ffeaf0', dark:false },
+  { name:'Olive',    color:'#f3ffe9', dark:false },
 
-    { name:'Graphite', color:'#0f1115', dark:true  },
-    { name:'Space',    color:'#111319', dark:true  },
-    { name:'Indigo',   color:'#0f1020', dark:true  },
-    { name:'Forest',   color:'#0e1612', dark:true  }
-  ];
+  // 深色系（差異更明顯）
+  { name:'Graphite', color:'#0f1115', dark:true  },
+  { name:'Navy',     color:'#0d1324', dark:true  },
+  { name:'Teal',     color:'#082420', dark:true  },
+  { name:'Maroon',   color:'#240f0f', dark:true  },
+  { name:'Indigo',   color:'#1b1033', dark:true  },
+  { name:'Slate',    color:'#1b1e26', dark:true  }
+];
 
   initColorPanel();
 
@@ -566,7 +580,7 @@
     PRESETS.forEach((p) => {
       const btn = document.createElement('button');
       btn.className = 'swatch-btn';
-      btn.style.background = p.color;
+btn.style.setProperty('--swatch-color', p.color);
       btn.title = p.name;
       btn.dataset.color = p.color;
       btn.dataset.dark = p.dark ? '1' : '0';
